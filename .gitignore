@@ -6,4 +6,5 @@ bin/*
 *.depend
 *.layout
 *.html
+*.png
 

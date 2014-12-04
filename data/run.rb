@@ -20,10 +20,10 @@ until sample > sample_end
 			prob = prob + prob_step
 			next
 		end
-		values = lines.map{|l| l.split.last.to_f}
-		avg = values.reduce(:+)/values.size
-		stdev = Math.sqrt(values.map{|v| (v-avg)*(v-avg)}.reduce(:+)/values.size)
-		open("#{dataset}/results_#{prob}_#{sample}.out", "w"){|f| f.puts values.join("\n")}
+		values = lines.map{|l| l.split.last(2).map{|v| v.to_f}}
+		avg = values.map{|v| v.first}.reduce(:+)/values.size
+		stdev = Math.sqrt(values.map{|v| (v.first-avg)*(v.first-avg)}.reduce(:+)/values.size)
+		open("#{dataset}/results_#{prob}_#{sample}.out", "w"){|f| f.puts values.map{|v| v.join "\t"}.join("\n")}
 		open("#{dataset}/mean_#{prob}_#{sample}.out", "w"){|f| f.puts ["0.0", "1.0"].map{|v| "#{avg} #{v}"}.join("\n")}
 		open("#{dataset}/dev_#{prob}_#{sample}.out", "w"){|f| f.puts "#{avg} 1.0 #{avg-stdev} #{avg+stdev}"}
 		prob = prob + prob_step

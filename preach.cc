@@ -851,8 +851,9 @@ int main(int argc, char** argv)
 
     double total = 0.0;
     int sampleSize = atoi(argv[5]);
-    cout << "#V\tE\tP" << endl;
+    cout << "#V\tE\tP\tT" << endl;
     for (int i=0; i<sampleSize; i++){
+        double startCPUTime = getCPUTime();
         //Initialize a new graph from the original
         ListDigraph g;
         WeightMap wMap(g);
@@ -870,7 +871,8 @@ int main(int argc, char** argv)
         numEdges = countArcs(g);
         cout << numNodes << "\t" << numEdges << "\t";
         if (numEdges == 0){ // empty graph - source and target unreachable
-            cout << "0.0" << endl;
+            double duration = getCPUTime() - startCPUTime;
+            cout << "0.0\t" << duration << endl;
             continue;
         }
 
@@ -879,7 +881,8 @@ int main(int argc, char** argv)
         FindSomeGoodCuts(g, source, target, cuts);
 
         double prob = Solve(g, wMap, source, target, cuts);
-        cout << prob << endl;
+        double duration = getCPUTime() - startCPUTime;
+        cout << prob << "\t" << duration << endl;
         total += prob;
 
         // print the edges for reference

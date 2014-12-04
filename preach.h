@@ -30,8 +30,22 @@ typedef bitset<MAX_EDGES> Edges_T;
 typedef unsigned long ulong;
 
 #ifdef WIN32
+#include <Windows.h>
 void srand48(int seed){srand(seed);}
 double drand48(){return ((double)rand())/RAND_MAX;}
+//get cpu time in milliseconds
+double getCPUTime(){
+    FILETIME a, b, sysTime, userTime;
+    GetProcessTimes(GetCurrentProcess(),&a,&b,&sysTime,&userTime);
+    return (double)(sysTime.dwLowDateTime | ((unsigned long long)sysTime.dwHighDateTime << 32)) * 0.0001 +
+           (double)(userTime.dwLowDateTime | ((unsigned long long)userTime.dwHighDateTime << 32)) * 0.0001;
+}
+#else
+#include <sys/time.h>
+//get cpu time in milliseconds
+double getCPUTime(){
+    return (double)clock() / (CLOCKS_PER_SEC/1000);
+}
 #endif
 
 
