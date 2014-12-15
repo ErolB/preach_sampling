@@ -8,11 +8,15 @@ using lemon::Bfs;
 typedef ListDigraph::ArcMap<double> WeightMap;
 typedef ListDigraph::NodeMap<string> NodeNames;
 typedef map<string, ListDigraph::Node> NameToNode;
+typedef ListDigraph::ArcMap<int> ArcIntMap;
 
 const string SOURCE = "SOURCE";
 const string SINK = "SINK";
 const string PRE_YES = "pre";
 const string PRE_NO = "nopre";
+
+const string SAMPLING_RANDOM = "rand";
+const string SAMPLING_FIXED_RANDOM = "fixrand";
 
 
 // map names to nodes
@@ -45,7 +49,7 @@ bool EdgeExists(ListDigraph& g, ListDigraph::Node& source, ListDigraph::Node& ta
 void CreateGraph(char* filename, ListDigraph& g,
                  ListDigraph::NodeMap<string>& nMap,
                  NameToNode& nodeMap,
-                 WeightMap& wMap){
+                 WeightMap& wMap, ArcIntMap& arcIdMap){
 	fstream in(filename);
 
 	while (!in.eof()){
@@ -61,7 +65,8 @@ void CreateGraph(char* filename, ListDigraph& g,
 		ListDigraph::Node tN = FindNode(stop, g, nMap, nodeMap);
 		if (!EdgeExists(g, sN, tN)){
 			ListDigraph::Arc a = g.addArc(sN, tN);
-			wMap[a]=weight;
+			wMap[a] = weight;
+			arcIdMap[a] = g.id(a);
 		}
 	}
 	in.close();
@@ -778,16 +783,36 @@ bool CheckProcessedReference(ListDigraph& g, WeightMap& wMap, NodeNames& nNames,
     }
 }
 
-/* This function samples the graph.
+/* This function samples the edges in sampleEdges */
+void SampleFixed(ListDigraph& g, WeightMap& wMap,
+                 ListDigraph::Node& source, ListDigraph::Node& target,
+                 Edges_T& sampleEdges, ArcIntMap& arcIdMap){
+    for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
+        if (sampleEdges.test(arcIdMap[arc])){ // edge is in sampleEdges
+            if (drand48() <= wMap[arc]){ // sampling coin toss
+                wMap[arc] = 1.0;
+            } else {
+                wMap[arc] = 0.0;
+                g.erase(arc);
+            }
+        }
+    }
+}
+
+/* This function samples the graph. The edges to sample are randomly selected.
 ** For every edge (excpet from SOURCE or to TARGET), it tosses a coin with success prob = samplingProb
 ** If success, the edge is sampled using its edge probability
 ** Edges that result in 0 are erased from g.
+** Also sampleEdges will change to reflect the resulting sampled set of edges.
 */
-void Sample(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, double samplingProb){
+void SampleRandom(ListDigraph& g, WeightMap& wMap,
+                  ListDigraph::Node& source, ListDigraph::Node& target,
+                  double samplingProb, Edges_T& sampleEdges, ArcIntMap& arcIdMap){
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
         if (g.source(arc) == source || g.target(arc) == target)
             continue;
         if (drand48() <= samplingProb){ // generic coin toss
+            sampleEdges.set(arcIdMap[arc]);
             if (drand48() <= wMap[arc]){ // sampling coin toss
                 wMap[arc] = 1.0;
             } else {
@@ -804,15 +829,89 @@ void minimizeGraph(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, L
     RemoveSelfCycles(g);
 }
 
+/*This function performs one sampling iteration, returns the reachability result
+** sampleEdges will be used if fixed is set to true
+** sampleEdges will be changed to the chosen random set if fixed is false
+*/
+double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOrig,
+                 ListDigraph::Node& sourceOrig, ListDigraph::Node& targetOrig,
+                 bool fixed, double samplingProb, Edges_T& sampleEdges, bool print){
+    //Initialize a new graph from the original
+    ListDigraph g;
+    WeightMap wMap(g);
+    ArcIntMap arcIdMap(g);
+    ListDigraph::Node source;
+    ListDigraph::Node target;
+    digraphCopy(gOrig, g).node(sourceOrig, source).node(targetOrig, target).arcMap(wMapOrig, wMap).arcMap(arcIdMapOrig, arcIdMap).run();
+
+    // sample the graph
+    if (fixed){
+        SampleFixed(g, wMap, source, target, sampleEdges, arcIdMap);
+    } else {
+        SampleRandom(g, wMap, source, target, samplingProb, sampleEdges, arcIdMap);
+    }
+
+    // post-sampling minimization
+    minimizeGraph(g, wMap, source, target);
+
+    int numNodes = countNodes(g);
+    int numEdges = countArcs(g);
+    if (print) cout << numNodes << "\t" << numEdges << "\t";
+    if (numEdges == 0){ // empty graph - source and target unreachable
+        return 0.0;
+    }
+
+    vector<Cut> cuts;
+    //FindGoodCuts(g, source, target, cuts);
+    FindSomeGoodCuts(g, source, target, cuts);
+
+    double prob = Solve(g, wMap, source, target, cuts);
+    return prob;
+}
+
+/* This function does random probing.
+** Does multiple random sampling and selects the edge set that makes the least runtime on average
+** The resulting edges should be in sampleEdges
+*/
+void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
+                 ListDigraph::Node& sourceOrig, ListDigraph::Node& targetOrig,
+                 double samplingProb, Edges_T& sampleEdges, int probeSize){
+    map< string, vector<double> > durations;
+    map<string, Edges_T> samples;
+    for (int i=0; i<probeSize; i++){
+        Edges_T sample;
+        cout << ".";
+        double startCPUTime = getCPUTime();
+        iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, false, samplingProb, sample, false);
+        double duration = getCPUTime() - startCPUTime;
+        string sampleString = sample.to_string<char,std::string::traits_type,std::string::allocator_type>();
+        durations[sampleString].push_back(duration);
+        samples[sampleString] = sample;
+    }
+    // get the min average time sample
+    Edges_T minSample;
+    double minAvg = 1000000000;
+    for (map< string, vector<double> >::iterator it=durations.begin(); it != durations.end(); ++it){
+        double avg = std::accumulate(it->second.begin(), it->second.end(), 0.0) / it->second.size();
+        if (avg < minAvg){
+            minAvg = avg;
+            minSample = samples[it->first];
+        }
+    }
+    sampleEdges = minSample;
+}
+
 int main(int argc, char** argv)
 {
-    if (argc < 6) {
+    if (argc < 8) {
 		// arg1: network file
 		// arg2: sources file
 		// arg3: targets file
 		// arg4: sampled portion
 		// arg5: Number of samples
-		cout << "ERROR - Usage: preach graph-file sources-file targets-file sampled-portion sample-size" << endl;
+		// arg6: sampling method
+		// arg7: probe size (if any)
+		cout << "ERROR - Usage: preach graph-file sources-file targets-file sampled-portion sample-size sampling-method" << endl;
 		return -1;
 	}
 
@@ -825,8 +924,9 @@ int main(int argc, char** argv)
 	WeightMap wMapOrig(gOrig); // keeps track of weights
 	NodeNames nNames(gOrig); // node names
 	NameToNode nodeMap; // mapping from names to nodes in the graph
+	ArcIntMap arcIdMapOrig(gOrig); // mapping from the arcs to their ids in the original graph
 
-	CreateGraph(argv[1], gOrig, nNames, nodeMap, wMapOrig);
+	CreateGraph(argv[1], gOrig, nNames, nodeMap, wMapOrig, arcIdMapOrig);
 	int numNodes = countNodes(gOrig);
 	int numEdges = countArcs(gOrig);
 	cout << "#Original graph size: " << numNodes << " nodes, " << numEdges << " edges" << endl;
@@ -849,20 +949,40 @@ int main(int argc, char** argv)
 	ListDigraph::Node sourceOrig = FindNode(SOURCE, gOrig, nNames, nodeMap);
 	ListDigraph::Node targetOrig = FindNode(SINK, gOrig, nNames, nodeMap);
 
+    Edges_T sampleEdges;
+    double samplingProb = atof(argv[4]);
+    bool fixedSample = false;
+    if (argv[6] == SAMPLING_FIXED_RANDOM){
+        int probeSize = atoi(argv[7]);
+        cout << "#Probing: random for " << probeSize << " times";
+        fixedSample = true;
+        ProbeRandom(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, samplingProb, sampleEdges, probeSize);
+        cout << endl;
+        cout << "#Fixed sample = " << sampleEdges.to_string<char,std::string::traits_type,std::string::allocator_type>() << endl;
+    }
+
+
     double total = 0.0;
     int sampleSize = atoi(argv[5]);
     cout << "#V\tE\tP\tT" << endl;
+
     for (int i=0; i<sampleSize; i++){
         double startCPUTime = getCPUTime();
+
+        double prob = iteration(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, fixedSample, samplingProb, sampleEdges, true);
+/*
+
         //Initialize a new graph from the original
         ListDigraph g;
         WeightMap wMap(g);
+        ArcIntMap arcIdMap(g);
         ListDigraph::Node source;
         ListDigraph::Node target;
-        digraphCopy(gOrig, g).node(sourceOrig, source).node(targetOrig, target).arcMap(wMapOrig, wMap).run();
+
+        digraphCopy(gOrig, g).node(sourceOrig, source).node(targetOrig, target).arcMap(wMapOrig, wMap).arcMap(arcIdMapOrig, arcIdMap).run();
 
         // sample the graph
-        Sample(g, wMap, source, target, atof(argv[4]));
+        //SampleRandom(g, wMap, source, target, atof(argv[4]));
 
         // post-sampling minimization
         minimizeGraph(g, wMap, source, target);
@@ -881,6 +1001,8 @@ int main(int argc, char** argv)
         FindSomeGoodCuts(g, source, target, cuts);
 
         double prob = Solve(g, wMap, source, target, cuts);
+        */
+
         double duration = getCPUTime() - startCPUTime;
         cout << prob << "\t" << duration << endl;
         total += prob;

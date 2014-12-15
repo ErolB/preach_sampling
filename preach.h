@@ -5,6 +5,7 @@
 #include <typeinfo>
 #include <sstream>
 #include <string>
+#include <numeric>
 
 #include <lemon/list_graph.h>
 #include <lemon/bfs.h>
@@ -19,8 +20,8 @@
 
 #include "Stl.h"
 
-#define MAX_NODES 512
-#define MAX_EDGES 6144
+#define MAX_NODES 256
+#define MAX_EDGES 256
 #define SURE 1.0
 
 using namespace std;
