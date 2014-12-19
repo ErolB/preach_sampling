@@ -1,3 +1,4 @@
+require 'fileutils'
 #This script runs the program with the following arguments, creates plottable datafiles for the results and a gnuplot script to plot them
 dataset, output, prob_start, prob_end, prob_step, sample_start, sample_end, sample_step, method, probe_size, probe_repeats = ARGV
 prob_start = prob_start.to_f
@@ -7,6 +8,8 @@ sample_start = sample_start.to_i
 sample_end = sample_end.to_i
 sample_step = sample_step.to_i
 puts sample_step
+
+FileUtils.mkdir output if Dir.glob(output).empty?
 
 sample = sample_start
 until sample > sample_end
