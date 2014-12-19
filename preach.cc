@@ -875,7 +875,7 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
 */
 void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
                  ListDigraph::Node& sourceOrig, ListDigraph::Node& targetOrig,
-                 double samplingProb, Edges_T& sampleEdges, int probeSize){
+                 double samplingProb, Edges_T& sampleEdges, int probeSize, int probeRepeats){
     map< string, vector<double> > durations;
     map<string, Edges_T> samples;
     for (int i=0; i<probeSize; i++){
@@ -887,6 +887,13 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
         string sampleString = sample.to_string<char,std::string::traits_type,std::string::allocator_type>();
         durations[sampleString].push_back(duration);
         samples[sampleString] = sample;
+        for (int j=1; j<probeRepeats; j++){
+            cout << ".";
+            startCPUTime = getCPUTime();
+            iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, true, samplingProb, sample, false);
+            duration = getCPUTime() - startCPUTime;
+            durations[sampleString].push_back(duration);
+        }
     }
     // get the min average time sample
     Edges_T minSample;
@@ -903,7 +910,7 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
 
 int main(int argc, char** argv)
 {
-    if (argc < 8) {
+    if (argc < 9) {
 		// arg1: network file
 		// arg2: sources file
 		// arg3: targets file
@@ -911,6 +918,7 @@ int main(int argc, char** argv)
 		// arg5: Number of samples
 		// arg6: sampling method
 		// arg7: probe size (if any)
+		// arg8: probe repeats (if any)
 		cout << "ERROR - Usage: preach graph-file sources-file targets-file sampled-portion sample-size sampling-method" << endl;
 		return -1;
 	}
@@ -954,9 +962,10 @@ int main(int argc, char** argv)
     bool fixedSample = false;
     if (argv[6] == SAMPLING_FIXED_RANDOM){
         int probeSize = atoi(argv[7]);
+        int probeRepeats = atoi(argv[8]);
         cout << "#Probing: random for " << probeSize << " times";
         fixedSample = true;
-        ProbeRandom(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, samplingProb, sampleEdges, probeSize);
+        ProbeRandom(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, samplingProb, sampleEdges, probeSize, probeRepeats);
         cout << endl;
         cout << "#Fixed sample = " << sampleEdges.to_string<char,std::string::traits_type,std::string::allocator_type>() << endl;
     }
@@ -968,47 +977,10 @@ int main(int argc, char** argv)
 
     for (int i=0; i<sampleSize; i++){
         double startCPUTime = getCPUTime();
-
         double prob = iteration(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, fixedSample, samplingProb, sampleEdges, true);
-/*
-
-        //Initialize a new graph from the original
-        ListDigraph g;
-        WeightMap wMap(g);
-        ArcIntMap arcIdMap(g);
-        ListDigraph::Node source;
-        ListDigraph::Node target;
-
-        digraphCopy(gOrig, g).node(sourceOrig, source).node(targetOrig, target).arcMap(wMapOrig, wMap).arcMap(arcIdMapOrig, arcIdMap).run();
-
-        // sample the graph
-        //SampleRandom(g, wMap, source, target, atof(argv[4]));
-
-        // post-sampling minimization
-        minimizeGraph(g, wMap, source, target);
-
-        numNodes = countNodes(g);
-        numEdges = countArcs(g);
-        cout << numNodes << "\t" << numEdges << "\t";
-        if (numEdges == 0){ // empty graph - source and target unreachable
-            double duration = getCPUTime() - startCPUTime;
-            cout << "0.0\t" << duration << endl;
-            continue;
-        }
-
-        vector<Cut> cuts;
-        //FindGoodCuts(g, source, target, cuts);
-        FindSomeGoodCuts(g, source, target, cuts);
-
-        double prob = Solve(g, wMap, source, target, cuts);
-        */
-
         double duration = getCPUTime() - startCPUTime;
         cout << prob << "\t" << duration << endl;
         total += prob;
-
-        // print the edges for reference
-        //cout << edgesToReferenceString(g, wMap, nNames) << "  ";
     }
     cout << "#>>result = " << total/sampleSize << endl;
     return 0;
