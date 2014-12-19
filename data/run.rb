@@ -1,5 +1,5 @@
 #This script runs the program with the following arguments, creates plottable datafiles for the results and a gnuplot script to plot them
-dataset, output, prob_start, prob_end, prob_step, sample_start, sample_end, sample_step, method, probe_size = ARGV
+dataset, output, prob_start, prob_end, prob_step, sample_start, sample_end, sample_step, method, probe_size, probe_repeats = ARGV
 prob_start = prob_start.to_f
 prob_end = prob_end.to_f
 prob_step = prob_step.to_f
@@ -14,7 +14,7 @@ until sample > sample_end
 	until prob > prob_end
 		puts "running: #{dataset} #{prob} #{sample}"
 		#result = "#asfd\n#asfdsf\n5 4 0.8\n6 5 0.7\n"
-		result = `../preach #{dataset}/network.txt #{dataset}/sources.txt #{dataset}/targets.txt #{prob} #{sample} #{method} #{probe_size}`
+		result = `../preach #{dataset}/network.txt #{dataset}/sources.txt #{dataset}/targets.txt #{prob} #{sample} #{method} #{probe_size} #{probe_repeats}`
 		lines = result.split("\n").reject{|l| l =~ /^#/}
 		if lines.size != sample
 			prob = prob + prob_step
