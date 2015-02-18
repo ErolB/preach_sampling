@@ -1024,6 +1024,7 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
         samples[sampleString] = sample;
         for (int j=0; j<probeRepeats; j++){
             cout << ".";
+            cout.flush();
             double startCPUTime = getCPUTime();
             iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, true, samplingProb, sample, false, weighted, chances); //last two parameters don't matter here
             double duration = getCPUTime() - startCPUTime;
@@ -1103,6 +1104,7 @@ int main(int argc, char** argv)
         fixedSample = true;
         weighted = (argv[6] == SAMPLING_FIXED_WEIGHTED_RANDOM);
         cout << "#Probing for " << probeSize << " times";
+        cout.flush();
         ProbeRandom(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, samplingProb, sampleEdges, probeSize, probeRepeats, weighted);
         cout << endl;
         //cout << "#Fixed sample = " << sampleEdges.to_string<char,std::string::traits_type,std::string::allocator_type>() << endl;
