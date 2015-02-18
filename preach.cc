@@ -17,6 +17,7 @@ const string PRE_NO = "nopre";
 
 const string SAMPLING_RANDOM = "rand";
 const string SAMPLING_FIXED_RANDOM = "fixrand";
+const string SAMPLING_FIXED_WEIGHTED_RANDOM = "fixwrand";
 
 
 // map names to nodes
@@ -93,6 +94,7 @@ void UnifyTerminals(ListDigraph& g,
 		WeightMap& wMap,
 		NodeNames& nMap,
 		NameToNode& nodeMap,
+		ArcIntMap& arcIdMap,
 		string sourcesFile,
 		string targetsFile){
 	vector<string> sources;
@@ -112,6 +114,7 @@ void UnifyTerminals(ListDigraph& g,
 		if (!EdgeExists(g, source, node)){
 			ListDigraph::Arc arc = g.addArc(source, node);
 			wMap[arc] = SURE;
+			arcIdMap[arc] = g.id(arc);
 		}
 	}END_FOREACH;
 
@@ -121,6 +124,7 @@ void UnifyTerminals(ListDigraph& g,
 		if (!EdgeExists(g, node, sink)){
 			ListDigraph::Arc arc = g.addArc(node, sink);
 			wMap[arc] = SURE;
+			arcIdMap[arc] = g.id(arc);
 		}
 	}END_FOREACH;
 }
@@ -213,7 +217,7 @@ void RemoveSelfCycles(ListDigraph& g){
  * if an edge a --> b already exists before with weight w', we merge the old edge with the new one with
  * a weight = 1-(1-w)(1-w')
  * */
-void CollapseELementaryPaths(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target){
+void CollapseELementaryPaths(ListDigraph& g, WeightMap& wMap, ArcIntMap& arcIdMap, ListDigraph::Node& source, ListDigraph::Node& target){
 	// repeat until nothing changes
 	bool changing = true;
 	while(changing){
@@ -246,6 +250,7 @@ void CollapseELementaryPaths(ListDigraph& g, WeightMap& wMap, ListDigraph::Node&
 					if (!found){ // no existing link.. add one
 						ListDigraph::Arc newArc = g.addArc(g.source(inArc), g.target(outArc));
 						wMap[newArc] = wMap[inArc]*wMap[outArc];
+						arcIdMap[newArc] = g.id(newArc);
 					}
 				}
 			}
@@ -265,13 +270,14 @@ void Preprocess(ListDigraph& g,
 		WeightMap& wMap,
 		NodeNames& nMap,
 		NameToNode& nodeMap,
+		ArcIntMap& arcIdMap,
 		string sourcesFile,
 		string targetsFile,
 		string pre){
-    UnifyTerminals(g, wMap, nMap, nodeMap, sourcesFile, targetsFile);
+    UnifyTerminals(g, wMap, nMap, nodeMap, arcIdMap, sourcesFile, targetsFile);
 	if (pre == PRE_YES){
 	    RemoveIsolatedNodes(g, nodeMap[SOURCE], nodeMap[SINK]);
-		CollapseELementaryPaths(g, wMap, nodeMap[SOURCE], nodeMap[SINK]);
+		CollapseELementaryPaths(g, wMap, arcIdMap, nodeMap[SOURCE], nodeMap[SINK]);
 		RemoveSelfCycles(g);
 	}
 	//EXTRA STEP: make sure source and sink are not directly connected
@@ -284,7 +290,9 @@ void Preprocess(ListDigraph& g,
             nMap[isolator] = "ISOLATOR";
             ListDigraph::Arc head = g.addArc(isolator, sink);
             wMap[head] = wMap[arc];
+            arcIdMap[head] = g.id(head);
             ListDigraph::Arc tail = g.addArc(source, isolator);
+            arcIdMap[tail] = g.id(tail);
             wMap[tail] = SURE;
             g.erase(arc);
             break;
@@ -314,8 +322,12 @@ void RemoveRedundantCuts(vector<Cut>& cuts){
 	}
 }
 
-/*Minimizes the cuts, then makes sure they are "Good"*/
-void RefineCuts(vector<Cut>& cuts, ListDigraph& g, ListDigraph::Node& target){
+/*Minimizes the cuts, then makes sure they are "Good"
+ It also returns edge subsets which are added together to a cut to make it "good",
+ along with the size of that cut
+ This is done for the purpose of weighted random probing
+*/
+void RefineCuts(vector<Cut>& cuts, ListDigraph& g, ListDigraph::Node& target, vector< pair< vector<int>, int> > & edgeSubsets){
 	// check for non-minimality: containment of cuts in other cuts
 	//RemoveRedundantCuts(cuts);
 
@@ -325,17 +337,23 @@ void RefineCuts(vector<Cut>& cuts, ListDigraph& g, ListDigraph::Node& target){
         Nodes_T right = cut.getRight();
         Nodes_T middle = cut.getMiddle();
         Edges_T covered = cut.getCoveredEdges();
+        int cutsize = middle.count();
         // repeat until nothing changes
         while(true){
             // for each node on the right, make sure its outgoing neighbors are all on the right also
             vector<int> toAdd;
             FOREACH_BS(nodeId, right){
                 ListDigraph::Node node = g.nodeFromId(nodeId);
+                vector<int> backedges;
                 for (ListDigraph::OutArcIt arc(g, node); arc != INVALID; ++arc){
-                    if (!right[g.id(g.target(arc))]){ // back edge, grow cut with this node
-                        toAdd.push_back(nodeId);
-                        break;
+                    if (!right[g.id(g.target(arc))]){ // back edge
+                        backedges.push_back(g.id(arc));
                     }
+                }
+                if (backedges.size() > 0){ // some backedges are there
+                    toAdd.push_back(nodeId);
+                    pair<vector<int>, int> subset = make_pair(backedges, cutsize);
+                    edgeSubsets.push_back(subset);
                 }
             }
             if (toAdd.size() == 0)
@@ -508,9 +526,32 @@ Cut createFirstCut(ListDigraph& g, ListDigraph::Node source, ListDigraph::Node t
     return Cut(left, middle, right, covered);
 }
 
+
+/* Collects edge subsets from cuts
+   An edge subset is all edges coming into a cut member from the left
+*/
+void FillEdgeSubsets(ListDigraph& g, vector<Cut>& cuts, vector< pair< vector<int>, int > > & edgeSubsets){
+    FOREACH_STL(cut, cuts){
+        Nodes_T middle = cut.getMiddle();
+        Nodes_T left = cut.getLeft();
+        FOREACH_BS(nodeId, middle){
+            ListDigraph::Node node = g.nodeFromId(nodeId);
+            vector<int> incoming;
+            for (ListDigraph::InArcIt arc(g, node); arc != INVALID; ++arc){
+                if (left.test(g.id(g.source(arc))))
+                    incoming.push_back(g.id(arc));
+            }
+            if (incoming.size() > 0){
+                pair< vector<int>, int > subset = make_pair(incoming, middle.count()-1);
+                edgeSubsets.push_back(subset);
+            }
+        }
+    }END_FOREACH;
+}
+
 /*Finds *SOME* good cuts: steps from a cut to the next by
 replacing every node by all of its neighbors*/
-void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Node target, vector<Cut>& cuts){
+void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Node target, vector<Cut>& cuts, vector< pair< vector<int>, int > > & edgeSubsets){
     //start by forming the first cut: adjacent to source
     Cut firstCut = createFirstCut(g, source, target);
     if (firstCut.getMiddle().none()){ // That was a dummy returned cut, i.e. no cuts available
@@ -575,32 +616,9 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
             currentCovered = covered;
         }
     }
-    //cout << "Before refine: " << cuts.size() << " cuts" << endl;
-    //PrintCuts(cuts, g);
-    //refine the cuts: minimize and make them good cuts
-    RefineCuts(cuts, g, target);
-    //cout << "After refine: " << cuts.size() << " cuts" << endl;
-    //cout << cuts.size() << "  ";
-    //PrintCuts(cuts, g);
-}
 
-/*Finds all good cuts in g*/
-void FindGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Node target, vector<Cut>& cuts){
-    //start by forming the first cut: adjacent to source, and recurse
-    Cut firstCut = createFirstCut(g, source, target);
-    if (firstCut.getMiddle().none()){ // That was a dummy returned cut, i.e. no cuts available
-        return;
-    }
-    cuts.push_back(firstCut);
-    FindAllCuts(firstCut, cuts, g, target);
-
-    //cout << "Before refine: " << cuts.size() << " cuts" << endl;
-    //PrintCuts(cuts, g);
-    //refine the cuts: minimize and make them good cuts
-    RefineCuts(cuts, g, target);
-    //cout << "After refine: " << cuts.size() << " cuts" << endl;
-    //cout << cuts.size() << "  ";
-    //PrintCuts(cuts, g);
+    FillEdgeSubsets(g, cuts, edgeSubsets);
+    RefineCuts(cuts, g, target, edgeSubsets);
 }
 
 /*Gets all edges as a bitset*/
@@ -823,10 +841,79 @@ void SampleRandom(ListDigraph& g, WeightMap& wMap,
     }
 }
 
-void minimizeGraph(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target){
+void minimizeGraph(ListDigraph& g, WeightMap& wMap, ArcIntMap& arcIdMap, ListDigraph::Node& source, ListDigraph::Node& target){
     RemoveIsolatedNodes(g, source, target);
-    CollapseELementaryPaths(g, wMap, source, target);
+    CollapseELementaryPaths(g, wMap, arcIdMap, source, target);
     RemoveSelfCycles(g);
+}
+
+/*Represents an edge subset, with its sampling score*/
+class EdgeSubset{
+    public:
+    int id;
+    vector<int> subset;
+    int cutsize;
+    double successProb;
+
+    double score(){
+        return successProb * cutsize / subset.size();
+    }
+};
+
+
+/* This method samples the graph using weighted random sampling through the chances vector.
+   It randomly selects an edge subset from chances vector, samples its members using their probability
+   Until the budget is met, which is derived from the samplingProb and the number of edges
+*/
+void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
+                  ListDigraph::Node& source, ListDigraph::Node& target,
+                  double samplingProb, Edges_T& sampleEdges, ArcIntMap& arcIdMap, vector<EdgeSubset>& chances){
+    // Our sampling budget
+    int budget = (int) ceil(countArcs(g) * samplingProb);
+    // The total number of edges
+    int edgesCount = countArcs(g);
+
+    // inverted list of original arc ids to arcs in g
+    map<int, ListDigraph::Arc> idToArc;
+    for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
+        idToArc[arcIdMap[arc]] = arc;
+    }
+
+    while (budget > 0){
+        int chancesSize = chances.size();
+        if (chancesSize > 0){
+            int index = (int) floor(drand48() * chances.size());
+            EdgeSubset es = chances[index];
+            FOREACH_STL(arcId, es.subset){
+                if (!sampleEdges.test(arcId)){
+                    budget --;
+                    sampleEdges.set(arcId);
+                    ListDigraph::Arc arc = idToArc[arcId];
+                    if (drand48() <= wMap[arc]){ // sampling coin toss
+                        wMap[arc] = 1.0;
+                    } else {
+                        wMap[arc] = 0.0;
+                        g.erase(arc);
+                    }
+                    if (budget <= 0)
+                        break;
+                }
+            }END_FOREACH;
+            // Here we go forward and backwards from index to remove the selected entries from chances
+            int id = chances[index].id;
+            int start, end;
+            for (start=index; start>=0 && chances[start].id==id; --start);
+            start ++;
+            for (end=index; end<chances.size() && chances[end].id==id; ++end);
+            chances.erase(chances.begin()+start, chances.begin()+end);
+        } else {
+            int edge = (int) floor(drand48() * edgesCount);
+            while (sampleEdges.test(edge))
+                edge = (int) floor(drand48() * edgesCount);
+            sampleEdges.set(edge);
+            budget --;
+        }
+    }
 }
 
 /*This function performs one sampling iteration, returns the reachability result
@@ -835,7 +922,8 @@ void minimizeGraph(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, L
 */
 double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOrig,
                  ListDigraph::Node& sourceOrig, ListDigraph::Node& targetOrig,
-                 bool fixed, double samplingProb, Edges_T& sampleEdges, bool print){
+                 bool fixed, double samplingProb, Edges_T& sampleEdges, bool print,
+                 bool weighted, vector<EdgeSubset>& chances){
     //Initialize a new graph from the original
     ListDigraph g;
     WeightMap wMap(g);
@@ -848,11 +936,15 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
     if (fixed){
         SampleFixed(g, wMap, source, target, sampleEdges, arcIdMap);
     } else {
-        SampleRandom(g, wMap, source, target, samplingProb, sampleEdges, arcIdMap);
+        if (weighted){
+            SampleWeightedRandom(g, wMap, source, target, samplingProb, sampleEdges, arcIdMap, chances);
+        } else {
+            SampleRandom(g, wMap, source, target, samplingProb, sampleEdges, arcIdMap);
+        }
     }
 
     // post-sampling minimization
-    minimizeGraph(g, wMap, source, target);
+    minimizeGraph(g, wMap, arcIdMap, source, target);
 
     int numNodes = countNodes(g);
     int numEdges = countArcs(g);
@@ -862,36 +954,79 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
     }
 
     vector<Cut> cuts;
-    //FindGoodCuts(g, source, target, cuts);
-    FindSomeGoodCuts(g, source, target, cuts);
+    vector< pair< vector<int>, int > > edgeSubsets;
+    FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
 
     double prob = Solve(g, wMap, source, target, cuts);
     return prob;
 }
 
+double SuccessProb(vector<int> subset, ListDigraph& gOrig, WeightMap& wMapOrig){
+    double result = 1.0;
+    FOREACH_STL(arcId, subset){
+        result *= (1.0 - wMapOrig[gOrig.arcFromId(arcId)]);
+    }END_FOREACH;
+    return result + 0.001;
+}
+
 /* This function does random probing.
 ** Does multiple random sampling and selects the edge set that makes the least runtime on average
+    if weighted = true: weighted by their sizes, disappearance probability and invloved cut size
 ** The resulting edges should be in sampleEdges
 */
 void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
                  ListDigraph::Node& sourceOrig, ListDigraph::Node& targetOrig,
-                 double samplingProb, Edges_T& sampleEdges, int probeSize, int probeRepeats){
+                 double samplingProb, Edges_T& sampleEdges, int probeSize, int probeRepeats, bool weighted){
+
+    vector<EdgeSubset> chancesOrig;
+    if (weighted){
+        vector<Cut> cuts;
+        vector< pair< vector<int>, int > > edgeSubsets;
+        FindSomeGoodCuts(gOrig, sourceOrig, targetOrig, cuts, edgeSubsets);
+
+        //Compile a vector of EdgeSubset objects
+        vector<EdgeSubset> ess;
+        double minScore = 1000000000.0;
+        int idCounter = 0;
+        FOREACH_STL(subset, edgeSubsets){
+            idCounter ++;
+            EdgeSubset es;
+            es.id = idCounter;
+            es.subset = subset.first;
+            es.cutsize = subset.second;
+            es.successProb = SuccessProb(subset.first, gOrig, wMapOrig);
+//            bool jump = false;
+//            FOREACH_STL(arcId, es.subset){
+//                ListDigraph::Arc arc = gOrig.arcFromId(arcId);
+//                jump = jump || gOrig.source(arc) == sourceOrig || gOrig.target(arc) == targetOrig;
+//            }END_FOREACH;
+//            if (jump) continue; // we don't want any subset that is involved with wource or target
+            ess.push_back(es);
+            if (es.score() < minScore)
+                minScore = es.score();
+        }END_FOREACH;
+
+        // form a chances vector
+        FOREACH_STL(es, ess){
+            int esChances = (int) ceil(es.score() / minScore);
+            for (int i=0; i<esChances; i++)
+                chancesOrig.push_back(es);
+        }END_FOREACH;
+    }
+
     map< string, vector<double> > durations;
     map<string, Edges_T> samples;
     for (int i=0; i<probeSize; i++){
         Edges_T sample;
-        cout << ".";
-        double startCPUTime = getCPUTime();
-        iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, false, samplingProb, sample, false);
-        double duration = getCPUTime() - startCPUTime;
+        vector<EdgeSubset> chances = chancesOrig;
+        iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, false, samplingProb, sample, false, weighted, chances);
         string sampleString = sample.to_string<char,std::string::traits_type,std::string::allocator_type>();
-        durations[sampleString].push_back(duration);
         samples[sampleString] = sample;
-        for (int j=1; j<probeRepeats; j++){
+        for (int j=0; j<probeRepeats; j++){
             cout << ".";
-            startCPUTime = getCPUTime();
-            iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, true, samplingProb, sample, false);
-            duration = getCPUTime() - startCPUTime;
+            double startCPUTime = getCPUTime();
+            iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, true, samplingProb, sample, false, weighted, chances); //last two parameters don't matter here
+            double duration = getCPUTime() - startCPUTime;
             durations[sampleString].push_back(duration);
         }
     }
@@ -941,7 +1076,7 @@ int main(int argc, char** argv)
 	//cout << numNodes << "  " << numEdges << "  ";
 
 	// Read sources and targets and preprocess
-	Preprocess(gOrig, wMapOrig, nNames, nodeMap, argv[2], argv[3], PRE_YES);
+	Preprocess(gOrig, wMapOrig, nNames, nodeMap, arcIdMapOrig, argv[2], argv[3], PRE_YES);
 
 	numNodes = countNodes(gOrig);
 	numEdges = countArcs(gOrig);
@@ -960,14 +1095,17 @@ int main(int argc, char** argv)
     Edges_T sampleEdges;
     double samplingProb = atof(argv[4]);
     bool fixedSample = false;
-    if (argv[6] == SAMPLING_FIXED_RANDOM){
+    bool weighted = false;
+    vector<EdgeSubset> chances;
+    if (argv[6] == SAMPLING_FIXED_RANDOM || argv[6] == SAMPLING_FIXED_WEIGHTED_RANDOM){
         int probeSize = atoi(argv[7]);
         int probeRepeats = atoi(argv[8]);
-        cout << "#Probing: random for " << probeSize << " times";
         fixedSample = true;
-        ProbeRandom(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, samplingProb, sampleEdges, probeSize, probeRepeats);
+        weighted = (argv[6] == SAMPLING_FIXED_WEIGHTED_RANDOM);
+        cout << "#Probing for " << probeSize << " times";
+        ProbeRandom(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, samplingProb, sampleEdges, probeSize, probeRepeats, weighted);
         cout << endl;
-        cout << "#Fixed sample = " << sampleEdges.to_string<char,std::string::traits_type,std::string::allocator_type>() << endl;
+        //cout << "#Fixed sample = " << sampleEdges.to_string<char,std::string::traits_type,std::string::allocator_type>() << endl;
     }
 
 
@@ -977,7 +1115,7 @@ int main(int argc, char** argv)
 
     for (int i=0; i<sampleSize; i++){
         double startCPUTime = getCPUTime();
-        double prob = iteration(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, fixedSample, samplingProb, sampleEdges, true);
+        double prob = iteration(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, fixedSample, samplingProb, sampleEdges, true, weighted, chances);
         double duration = getCPUTime() - startCPUTime;
         cout << prob << "\t" << duration << endl;
         total += prob;

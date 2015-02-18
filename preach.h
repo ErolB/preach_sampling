@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <numeric>
+#include <math.h>
 
 #include <lemon/list_graph.h>
 #include <lemon/bfs.h>
