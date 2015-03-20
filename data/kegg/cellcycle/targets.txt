@@ -1,0 +1,14 @@
+hsa:595|hsa:894|hsa:896
+hsa:1019|hsa:1021
+hsa:1017
+hsa:983
+hsa:4176|hsa:4175|hsa:4174|hsa:4173|hsa:4172|hsa:4171
+hsa:85417|hsa:891|hsa:9133
+hsa:10459|hsa:4085
+hsa:9184
+hsa:10393|hsa:246184|hsa:25847|hsa:29882|hsa:29945|hsa:51433|hsa:51434|hsa:51529|hsa:64682|hsa:8697|hsa:8881|hsa:996
+hsa:27127|hsa:8243|hsa:9126|hsa:10274|hsa:10735|hsa:5885
+hsa:1869|hsa:1870|hsa:1871
+hsa:7027|hsa:7029|hsa:1874|hsa:1875
+hsa:898|hsa:9134
+hsa:4087|hsa:4088

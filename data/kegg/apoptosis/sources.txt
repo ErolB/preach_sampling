@@ -1,0 +1,16 @@
+hsa:356
+hsa:8743
+hsa:7124
+hsa:3552|hsa:3553
+hsa:4803
+hsa:3562
+hsa:8737
+hsa:7186
+hsa:317
+hsa:5566|hsa:5567|hsa:5568|hsa:5573|hsa:5575|hsa:5576|hsa:5577|hsa:5613
+hsa:5530|hsa:5532|hsa:5533|hsa:5534|hsa:5535
+hsa:4790|hsa:5970
+hsa:11213|hsa:3654|hsa:3656|hsa:51135
+hsa:823|hsa:824
+hsa:8837
+hsa:472

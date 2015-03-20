@@ -1,0 +1,10 @@
+hsa:8772|hsa:8717
+hsa:7186|hsa:8737|hsa:8717
+hsa:11213|hsa:3654|hsa:3656|hsa:51135|hsa:4615
+hsa:839
+hsa:4792
+hsa:572
+hsa:598
+hsa:1677
+hsa:7157
+hsa:581
