@@ -22,7 +22,7 @@
 #include "Stl.h"
 
 #define MAX_NODES 256
-#define MAX_EDGES 256
+#define MAX_EDGES 1024
 #define SURE 1.0
 
 using namespace std;
