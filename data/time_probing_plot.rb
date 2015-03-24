@@ -17,7 +17,7 @@ def get_values(filename)
 	results
 end
 
-rand_values = get_values "#{dir}/times_rand_#{prob}_#{size}.out"
+rand_values = get_values randfile
 method_values = get_values methodfile
 open(randfile.gsub("times_", "avg_"), "w"){|f| f.puts rand_values.map{|k,v| "#{k}\t#{v.reduce(:+)/v.size}"}}
 open(randfile.gsub("times_", "median_"), "w"){|f| f.puts rand_values.map{|k,v| "#{k}\t#{(v.sort[v.size/2]+v.sort[(v.size-1)/2])/2.0}"}}
