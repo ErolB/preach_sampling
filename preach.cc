@@ -1038,7 +1038,7 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
     for (int i=0; i<probeSize; i++){
         Edges_T sample;
         vector<EdgeSubset> chances = chancesOrig;
-        iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, false, samplingProb, sample, true, weighted, chances);
+        iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, false, samplingProb, sample, false, weighted, chances);
         string sampleString = sample.to_string<char,std::string::traits_type,std::string::allocator_type>();
         samples[sampleString] = sample;
         for (int j=0; j<probeRepeats; j++){
