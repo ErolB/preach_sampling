@@ -1023,7 +1023,7 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
         string sampleString = sample.to_string<char,std::string::traits_type,std::string::allocator_type>();
         samples[sampleString] = sample;
         for (int j=0; j<probeRepeats; j++){
-            cout << ".";
+            cout << "." << sample.count();
             cout.flush();
             double startCPUTime = getCPUTime();
             iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, true, samplingProb, sample, false, weighted, chances); //last two parameters don't matter here
