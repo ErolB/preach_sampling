@@ -14,7 +14,7 @@ start_size.step(end_size, step) do |size|
 	1.upto(version_count) do |version|
 		if preach == "preach1"
 			tail = " pmc pre"
-		else if preach == "preach2"
+		elsif preach == "preach2"
 			tail = " "
 		else
 			tail = " #{sampling_prob} 1000 fixwrand 10 10"
@@ -23,12 +23,10 @@ start_size.step(end_size, step) do |size|
 		open("#{filename}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.each do |pair|
 			cmd = "../../#{preach} #{filename}.txt node_#{pair.first}.txt node_#{pair.last}.txt #{tail}"
 			puts cmd
+			output = ""
 			times = Benchmark.measure{output = `#{cmd} 2>&1`}
 			result = (output =~ /EXCEPTION|bad_alloc/) ? "NA" : times.total
-			open(outfile, "a"){|f| f.puts "#{size}\t#{version}\t#{pair.firs}\t#{pair.last}\t#{result}"}
+			open(outfile, "a"){|f| f.puts "#{size}\t#{version}\t#{pair.first}\t#{pair.last}\t#{result}"}
 		end
 	end
 end
-
-
-
