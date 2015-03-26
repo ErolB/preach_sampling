@@ -5,6 +5,7 @@ edges_per_node, min_size, steps, step_size, versions = ARGV.map{|a| a.to_i}
 @connected = {}
 @edges = []
 @chances = []
+@reachable = []
 
 def connect node1, node2
 	@connected["#{node1}-#{node2}"] = true
@@ -12,14 +13,22 @@ def connect node1, node2
 	@chances << node1 << node2
 	if rand > 0.5
 		@edges << [node1, node2, rand]
+		@reachable = @reachable + @reachable.select{|p| p.last == node1}.map{|p| [p.first, node2]}
+		@reachable << [node1, node2]
 	else
 		@edges << [node2, node1, rand]
+		@reachable = @reachable + @reachable.select{|p| p.last == node2}.map{|p| [p.first, node1]}
+		@reachable << [node2, node1]
 	end
+	@reachable.uniq!
 end
 
 def output filename
 	open "#{filename}.txt", "w" do |f|
 		@edges.each{|e| f.puts e.join(" ")}
+	end
+	open "#{filename}.terminals", "w" do |f|
+		@reachable.each{|r| f.puts r.join(" ")}
 	end
 end
 
@@ -27,6 +36,7 @@ end
 	@connected = {}
 	@edges = []
 	@chances = []
+	@reachable = []
 	steps.times do |step|
 		1.upto step_size do |i|
 			node1 = step * step_size + i
