@@ -5,6 +5,7 @@
 size, sampling_prob = ARGV
 t = 1.96234147 #t 0.05,999
 outfile = "confidence_2_#{size}_#{sampling_prob}.out"
+logfile = "confidence_2_#{size}_#{sampling_prob}.log"
 
 open(outfile, "w"){}
 net = "BA_2_#{size}_1"
@@ -17,6 +18,7 @@ open("#{net}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.ea
 		next
 	else
 		ref = output.split(">>").last.strip.to_f
+		open(logfile, "a"){|f| f.puts "========================================\n#{pair.first}\t#{pair.last}\t#{ref}\n--------------"}
 		cmd = "../../preach #{net}.txt node_#{pair.first}.txt node_#{pair.last}.txt #{sampling_prob} 1000 fixwrand 5 10"
 		success = 0.0
 		puts cmd
@@ -29,6 +31,7 @@ open("#{net}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.ea
 			ci = [avg-err, avg+err]
 			success += 1 if ref > ci.first and ref < ci.last
 			print "."
+			open(logfile, "a"){|f| f.puts ci}
 		end
 		open(outfile, "a"){|f| f.puts "#{pair.first}\t#{pair.last}\t#{success/1000}"}
 		puts success/1000
