@@ -31,7 +31,7 @@ open("#{net}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.ea
 			ci = [avg-err, avg+err]
 			success += 1 if ref > ci.first and ref < ci.last
 			print "."
-			open(logfile, "a"){|f| f.puts ci}
+			open(logfile, "a"){|f| f.puts ci.to_s}
 		end
 		open(outfile, "a"){|f| f.puts "#{pair.first}\t#{pair.last}\t#{success/1000}"}
 		puts success/1000
