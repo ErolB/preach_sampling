@@ -8,7 +8,7 @@ outfile = "confidence_2_#{size}_#{sampling_prob}.out"
 
 open(outfile, "w"){}
 net = "BA_2_#{size}_1"
-open("#{net}.terminals")){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.each do |pair|
+open("#{net}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.each do |pair|
 	cmd = "../../preach1 #{net}.txt node_#{pair.first}.txt node_#{pair.last}.txt pmc pre"
 	puts cmd
 	output = `#{cmd} 2>&1`
