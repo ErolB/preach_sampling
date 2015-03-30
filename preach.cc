@@ -542,7 +542,7 @@ void FillEdgeSubsets(ListDigraph& g, vector<Cut>& cuts, vector< pair< vector<int
                     incoming.push_back(g.id(arc));
             }
             if (incoming.size() > 0){
-                pair< vector<int>, int > subset = make_pair(incoming, middle.count()-1);
+                pair< vector<int>, int > subset = make_pair(incoming, middle.count());
                 edgeSubsets.push_back(subset);
             }
         }
@@ -879,38 +879,51 @@ void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
         idToArc[arcIdMap[arc]] = arc;
     }
 
-    while (budget > 0){
-        int chancesSize = chances.size();
-        if (chancesSize > 0){
-            int index = (int) floor(drand48() * chances.size());
-            EdgeSubset es = chances[index];
-            FOREACH_STL(arcId, es.subset){
-                if (!sampleEdges.test(arcId)){
-                    budget --;
-                    sampleEdges.set(arcId);
-                    ListDigraph::Arc arc = idToArc[arcId];
-                    if (drand48() <= wMap[arc]){ // sampling coin toss
-                        wMap[arc] = 1.0;
-                    } else {
-                        wMap[arc] = 0.0;
-                        g.erase(arc);
-                    }
-                    if (budget <= 0)
-                        break;
+    while (budget > 0 && chances.size() > 0){
+        int index = (int) floor(drand48() * chances.size());
+        EdgeSubset es = chances[index];
+        FOREACH_STL(arcId, es.subset){
+            if (!sampleEdges.test(arcId)){
+                budget --;
+                sampleEdges.set(arcId);
+                ListDigraph::Arc arc = idToArc[arcId];
+                if (drand48() <= wMap[arc]){ // sampling coin toss
+                    wMap[arc] = 1.0;
+                } else {
+                    wMap[arc] = 0.0;
+                    g.erase(arc);
                 }
-            }END_FOREACH;
-            // Here we go forward and backwards from index to remove the selected entries from chances
-            int id = chances[index].id;
-            int start, end;
-            for (start=index; start>=0 && chances[start].id==id; --start);
-            start ++;
-            for (end=index; end<chances.size() && chances[end].id==id; ++end);
-            chances.erase(chances.begin()+start, chances.begin()+end);
-        } else {
-            int edge = (int) floor(drand48() * edgesCount);
-            while (sampleEdges.test(edge))
-                edge = (int) floor(drand48() * edgesCount);
-            sampleEdges.set(edge);
+                if (budget <= 0)
+                    break;
+            }
+        }END_FOREACH;
+        // Here we go forward and backwards from index to remove the selected entries from chances
+        int id = chances[index].id;
+        int start, end;
+        for (start=index; start>=0 && chances[start].id==id; --start);
+        start ++;
+        for (end=index; end<chances.size() && chances[end].id==id; ++end);
+        chances.erase(chances.begin()+start, chances.begin()+end);
+    }
+    if (budget > 0){
+        vector<int> remainingEdges;
+        for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
+            if (!sampleEdges.test(arcIdMap[arc]))
+                remainingEdges.push_back(g.id(arc));
+        }
+        while (budget > 0){
+            int index = (int) floor(drand48() * remainingEdges.size());
+            int edge = remainingEdges[index];
+            ListDigraph::Arc arc = g.arcFromId(edge);
+            int arcId = arcIdMap[arc];
+            if (drand48() <= wMap[arc]){ // sampling coin toss
+                wMap[arc] = 1.0;
+            } else {
+                wMap[arc] = 0.0;
+                g.erase(arc);
+            }
+            sampleEdges.set(arcId);
+            remainingEdges.erase(remainingEdges.begin()+index);
             budget --;
         }
     }
@@ -948,7 +961,7 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
 
     int numNodes = countNodes(g);
     int numEdges = countArcs(g);
-    if (print) cout << numNodes << "\t" << numEdges << "\t";
+    if (print) cout << "\t" << sampleEdges.count() << "\t" << numNodes << "\t" << numEdges;
     if (numEdges == 0){ // empty graph - source and target unreachable
         return 0.0;
     }
@@ -987,6 +1000,7 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
         //Compile a vector of EdgeSubset objects
         vector<EdgeSubset> ess;
         double minScore = 1000000000.0;
+        double maxScore = -1.0;
         int idCounter = 0;
         FOREACH_STL(subset, edgeSubsets){
             idCounter ++;
@@ -1004,11 +1018,16 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
             ess.push_back(es);
             if (es.score() < minScore)
                 minScore = es.score();
+            if (es.score() > maxScore)
+                maxScore = es.score();
         }END_FOREACH;
 
         // form a chances vector
         FOREACH_STL(es, ess){
-            int esChances = (int) ceil(es.score() / minScore);
+            double range = maxScore - minScore;
+            double esScore = es.score();
+            double esRatio = (esScore - minScore) * 100.0 / range; //normalization
+            int esChances = (int) ceil(esRatio);
             for (int i=0; i<esChances; i++)
                 chancesOrig.push_back(es);
         }END_FOREACH;
@@ -1023,7 +1042,7 @@ void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,
         string sampleString = sample.to_string<char,std::string::traits_type,std::string::allocator_type>();
         samples[sampleString] = sample;
         for (int j=0; j<probeRepeats; j++){
-            cout << "." << sample.count();
+            cout << ".";
             cout.flush();
             double startCPUTime = getCPUTime();
             iteration(gOrig, wMapOrig, arcIdMap, sourceOrig, targetOrig, true, samplingProb, sample, false, weighted, chances); //last two parameters don't matter here
