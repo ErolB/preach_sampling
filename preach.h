@@ -58,7 +58,7 @@ void initRand(){
     theRandomMT = std::mt19937(theRandomDevice);
     theRandomGenerator = std::uniform_real_distribution<double>(0.0, 1.0);
 }
-double nextRand(){return theRandomGenerator(theRandomMT());}
+double nextRand(){return theRandomGenerator(theRandomMT);}
 #include <sys/time.h>
 //get cpu time in milliseconds
 double getCPUTime(){
