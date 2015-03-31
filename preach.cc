@@ -961,7 +961,7 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
 
     int numNodes = countNodes(g);
     int numEdges = countArcs(g);
-    if (print) cout << "\t" << sampleEdges.count() << "\t" << numNodes << "\t" << numEdges;
+    if (print) cout << numNodes << "\t" << numEdges << "\t";
     if (numEdges == 0){ // empty graph - source and target unreachable
         return 0.0;
     }
