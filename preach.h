@@ -52,9 +52,12 @@ double getCPUTime(){
 
 #include <random>
 std::random_device theRandomDevice;
-std::mt19937 theRandomMT(theRandomDevice());
-std::uniform_real_distribution<double> theRandomGenerator(0.0, 1.0);
-void initRand(){}
+std::mt19937 theRandomMT;
+std::uniform_real_distribution<double> theRandomGenerator;
+void initRand(){
+    theRandomMT = std::mt19937(theRandomDevice);
+    theRandomGenerator = std::uniform_real_distribution<double>(0.0, 1.0);
+}
 double nextRand(){return theRandomGenerator(theRandomMT());}
 #include <sys/time.h>
 //get cpu time in milliseconds
