@@ -51,11 +51,14 @@ double getCPUTime(){
 #else
 
 #include <random>
-std::random_device theRandomDevice;
+//std::random_device theRandomDevice;
 std::mt19937 theRandomMT;
 std::uniform_real_distribution<double> theRandomGenerator;
 void initRand(){
-    theRandomMT = std::mt19937(theRandomDevice);
+    //theRandomMT = std::mt19937(theRandomDevice);
+    timeval time;
+    gettimeofday(&time,NULL);
+    theRandomMt.seed((time.tv_sec * 1000) + (time.tv_usec / 1000));
     theRandomGenerator = std::uniform_real_distribution<double>(0.0, 1.0);
 }
 double nextRand(){return theRandomGenerator(theRandomMT);}
