@@ -6,7 +6,7 @@ size_start.step(size_end, size_step) do |size|
 	prob_start.step(prob_end, prob_step) do |prob|
 		1.upto(versions) do |version|
 			net = "BA_2_#{size}_#{version}.txt"
-			cmd = "../../#{preach} #{net}.txt #{net}.sources #{net}.targets #{prob} 1000 fixwrand 5 10"
+			cmd = "../../preach #{net}.txt #{net}.sources #{net}.targets #{prob} 1000 fixwrand 5 10"
 			puts cmd
 			output = `#{cmd} 2>&1`
 			open("output_2_#{size}_#{prob}_#{version}.out", "w"){|f| f.write output}
