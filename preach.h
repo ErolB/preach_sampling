@@ -33,8 +33,14 @@ typedef unsigned long ulong;
 
 #ifdef WIN32
 #include <Windows.h>
-void srand48(int seed){srand(seed);}
-double drand48(){return ((double)rand())/RAND_MAX;}
+void initRand(){
+    timeval time;
+    gettimeofday(&time,NULL);
+    srand((time.tv_sec * 1000) + (time.tv_usec / 1000));
+}
+double nextRand(){return ((double)rand())/RAND_MAX;}
+//void srand48(int seed){srand(seed);}
+//double drand48(){return ((double)rand())/RAND_MAX;}
 //get cpu time in milliseconds
 double getCPUTime(){
     FILETIME a, b, sysTime, userTime;
@@ -43,6 +49,13 @@ double getCPUTime(){
            (double)(userTime.dwLowDateTime | ((unsigned long long)userTime.dwHighDateTime << 32)) * 0.0001;
 }
 #else
+
+#include <random>
+std::random_device theRandomDevice;
+std::mt19937 theRandomMT(theRandomDevice());
+std::uniform_real_distribution<double> theRandomGenerator(0.0, 1.0);
+void initRand(){}
+double nextRand(){return theRandomGenerator(theRandomMT());}
 #include <sys/time.h>
 //get cpu time in milliseconds
 double getCPUTime(){

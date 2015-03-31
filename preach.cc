@@ -807,7 +807,7 @@ void SampleFixed(ListDigraph& g, WeightMap& wMap,
                  Edges_T& sampleEdges, ArcIntMap& arcIdMap){
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
         if (sampleEdges.test(arcIdMap[arc])){ // edge is in sampleEdges
-            if (drand48() <= wMap[arc]){ // sampling coin toss
+            if (nextRand() <= wMap[arc]){ // sampling coin toss
                 wMap[arc] = 1.0;
             } else {
                 wMap[arc] = 0.0;
@@ -829,9 +829,9 @@ void SampleRandom(ListDigraph& g, WeightMap& wMap,
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
         if (g.source(arc) == source || g.target(arc) == target)
             continue;
-        if (drand48() <= samplingProb){ // generic coin toss
+        if (nextRand() <= samplingProb){ // generic coin toss
             sampleEdges.set(arcIdMap[arc]);
-            if (drand48() <= wMap[arc]){ // sampling coin toss
+            if (nextRand() <= wMap[arc]){ // sampling coin toss
                 wMap[arc] = 1.0;
             } else {
                 wMap[arc] = 0.0;
@@ -880,14 +880,14 @@ void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
     }
 
     while (budget > 0 && chances.size() > 0){
-        int index = (int) floor(drand48() * chances.size());
+        int index = (int) floor(nextRand() * chances.size());
         EdgeSubset es = chances[index];
         FOREACH_STL(arcId, es.subset){
             if (!sampleEdges.test(arcId)){
                 budget --;
                 sampleEdges.set(arcId);
                 ListDigraph::Arc arc = idToArc[arcId];
-                if (drand48() <= wMap[arc]){ // sampling coin toss
+                if (nextRand() <= wMap[arc]){ // sampling coin toss
                     wMap[arc] = 1.0;
                 } else {
                     wMap[arc] = 0.0;
@@ -912,11 +912,11 @@ void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
                 remainingEdges.push_back(g.id(arc));
         }
         while (budget > 0){
-            int index = (int) floor(drand48() * remainingEdges.size());
+            int index = (int) floor(nextRand() * remainingEdges.size());
             int edge = remainingEdges[index];
             ListDigraph::Arc arc = g.arcFromId(edge);
             int arcId = arcIdMap[arc];
-            if (drand48() <= wMap[arc]){ // sampling coin toss
+            if (nextRand() <= wMap[arc]){ // sampling coin toss
                 wMap[arc] = 1.0;
             } else {
                 wMap[arc] = 0.0;
@@ -1079,9 +1079,10 @@ int main(int argc, char** argv)
 	}
 
 	// initialize srand so we get random graphs
-    timeval time;
-    gettimeofday(&time,NULL);
-    srand48((time.tv_sec * 1000) + (time.tv_usec / 1000));
+    //timeval time;
+    //gettimeofday(&time,NULL);
+    //srand48((time.tv_sec * 1000) + (time.tv_usec / 1000));
+    initRand();
 
     ListDigraph gOrig;
 	WeightMap wMapOrig(gOrig); // keeps track of weights
