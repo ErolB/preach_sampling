@@ -16,7 +16,7 @@ Dir.glob("#{dataset}/*.net").each do |net|
 				open(outfile, "a"){|f| f.print(sprintf "%-12s", "EXCEPTION")}
 				next
 			else
-				open(outfile, "a"){|f| f.print(output.split(">>").last.strip.to_f.round(6))}
+				open(outfile, "a"){|f| f.print(sprintf "%-12f", output.split(">>result =").last.strip.to_f.round(6))}
 			end
 		end
 	end
