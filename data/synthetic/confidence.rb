@@ -10,6 +10,7 @@ logfile = "confidence_2_#{size}_#{sampling_prob}.log"
 open(outfile, "w"){}
 net = "BA_2_#{size}_1"
 open("#{net}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.each do |pair|
+	next if pair.first == pair.last
 	cmd = "../../preach1 #{net}.txt node_#{pair.first}.txt node_#{pair.last}.txt pmc pre"
 	puts cmd
 	output = `#{cmd} 2>&1`
@@ -25,11 +26,12 @@ open("#{net}.terminals"){|f| f.read}.strip.split("\n").map{|l| l.strip.split}.ea
 		1000.times do
 			output = `#{cmd} 2>&1`
 			sample = output.split("\n").map{|l| l.strip}.reject{|l| l =~ /^#/}.map{|l| l.split.map{|p| p.strip}[2].to_f}
-			avg = sample.reduce(:+)/sample.size
+			#avg = sample.reduce(:+)/sample.size
+			avg = output.split("#>>result =").last.strip.to_f
 			std = Math.sqrt(sample.map{|x| (x-avg)*(x-avg)}.reduce(:+)/(sample.size-1))
 			err = t*std/Math.sqrt(sample.size)
 			ci = [avg-err, avg+err]
-			success += 1 if ref > ci.first and ref < ci.last
+			success += 1 if ref >= ci.first and ref <= ci.last
 			print "."
 			open(logfile, "a"){|f| f.puts ci.to_s}
 		end

@@ -1,3 +1,4 @@
+#This script runs all .net files in the given dataset, for all st pairs, and tabulate the reachability results
 dataset, sampling_prob = ARGV
 
 outfile = "#{dataset}/profiles.out"
