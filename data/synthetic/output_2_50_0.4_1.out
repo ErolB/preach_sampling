@@ -1,0 +1,4 @@
+#Original graph size: 50 nodes, 92 edges
+#Modified graph size: 37 nodes, 91 edges
+#Probing for 5 times.....
+EXCEPTION: std::bad_alloc: St9bad_alloc
