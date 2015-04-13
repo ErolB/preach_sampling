@@ -2,7 +2,8 @@
 #and counts the empirical percent of time the true result lies inside the interval
 #It does if for a specific given s-t pair (one result point)
 
-size, sampling_prob, source, target = ARGV
+size, sampling_prob, source, target, repeat = ARGV
+repeat = repeat.to_i
 t = 1.96234147 #t 0.05,999
 outfile = "confidence_2_#{size}_#{sampling_prob}_#{source}_#{target}.out"
 logfile = "confidence_2_#{size}_#{sampling_prob}_#{source}_#{target}.log"
@@ -20,7 +21,7 @@ else
 	cmd = "../../preach #{net}.txt node_#{source}.txt node_#{target}.txt #{sampling_prob} 1000 fixwrand 5 10"
 	success = 0.0
 	puts cmd
-	10000.times do
+	repeat.times do
 		output = `#{cmd} 2>&1`
 		sample = output.split("\n").map{|l| l.strip}.reject{|l| l =~ /^#/}.map{|l| l.split.map{|p| p.strip}[2].to_f}
 		#avg = sample.reduce(:+)/sample.size
@@ -32,6 +33,6 @@ else
 		print "."
 		open(logfile, "a"){|f| f.puts ci.to_s}
 	end
-	open(outfile, "w"){|f| f.puts "#{source}\t#{target}\t#{success/10000}"}
-	puts success/1000
+	open(outfile, "w"){|f| f.puts "#{source}\t#{target}\t#{success/repeat}"}
+	puts success/repeat
 end
