@@ -14,7 +14,6 @@ puts cmd
 output = `#{cmd} 2>&1`
 if output =~ /EXCEPTION|bad_alloc/
 	puts "EXCEPTION"
-	next
 else
 	ref = output.split(">>").last.strip.to_f
 	open(logfile, "a"){|f| f.puts "========================================\n#{source}\t#{target}\t#{ref}\n--------------"}
