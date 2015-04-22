@@ -1,6 +1,6 @@
 #This script runs BA_2_20_1 1000 times, computes confidence intervals,
 #and counts the empirical percent of time the true result lies inside the interval
-#parameters: 0.7, 1000, fixwrand, 5, 10
+
 
 size, sampling_prob = ARGV
 t = 1.96234147 #t 0.05,999
