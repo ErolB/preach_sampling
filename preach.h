@@ -21,6 +21,14 @@
 
 #include "Stl.h"
 
+// for debugging
+#include <stdio.h>
+#ifdef DEBUG
+#define dprintf(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define dprintf(fmt, ...)
+#endif
+
 #define MAX_NODES 256
 #define MAX_EDGES 1024
 #define SURE 1.0
@@ -286,7 +294,9 @@ public:
             Nodes_T z; // will hold the nodes to which the term collapses (Z)
             bool collapsed = term.collapse(midEdges, edgeTerminals, endNodes, z);
             if (collapsed){ // term DOES collapse to z
+                //dprintf("collapsed\n");
                 // Now we find the corresponding endTerm, or create it
+                //dprintf("term collapsed\n");
                 Term endTerm;
                 string endTermId = z.to_string< char,char_traits<char>,allocator<char> >();
                 if (endTerms.find(endTermId) != endTerms.end()){ // endTerm found
@@ -298,6 +308,7 @@ public:
                 endTerm.addToCoeff(term.getCoeff());
                 endTerms[endTermId] = endTerm;
             }else { // term DOES NOT collapse
+		//dprintf("term does not collapse\n");
                 newTerms.push_back(term);
             }
         }END_FOREACH;

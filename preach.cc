@@ -1,3 +1,12 @@
+/** Define debugging macro */
+
+#include <stdio.h>
+#ifdef DEBUG
+#define dprintf(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define dprintf(fmt, ...)
+#endif
+
 #include "preach.h"
 
 using namespace std;
@@ -655,7 +664,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
     //start adding the edges in the current sausage
     //here we collapse after each addition (arbitrary)
     int edgeCounter = 0;
-    FOREACH_BS(edgeId, sausage){
+    FOREACH_BS(edgeId, sausage){ ///////////////////////// ISSUE HERE ???
         edgeCounter ++;
         //cout << "Adding edge " << edgeCounter;
         poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
@@ -680,7 +689,6 @@ bool compareCuts(Cut cut1, Cut cut2){
 double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts){
     //FOR DEBUGGING - REMOVE
     //sort(cuts.begin(), cuts.end(), compareCuts);
-
     // set up the source term and start the polynomial
     Nodes_T zSource, wSource;
     zSource.set(g.id(source));
@@ -692,7 +700,9 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     Edges_T sausage; // This will hold the current sausage: edges being considered for addition
 
     // repeat until no cuts left
+    dprintf("starting loop\n");
     while(cuts.size() > 0){
+	dprintf("beginning iteration\n");
         //select a cut: here we just select the first one (arbitrary)
         Cut nextCut = cuts.front();
         //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
@@ -714,6 +724,7 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
         //remove obsolete cuts
         RemoveObsoleteCuts(cuts, nextCut);
     }
+    dprintf("Loop finished\n");
 
     // Last: add the edges between the last cut and the target node
     Edges_T allEdges; // set of all edges in the network
@@ -805,16 +816,22 @@ bool CheckProcessedReference(ListDigraph& g, WeightMap& wMap, NodeNames& nNames,
 void SampleFixed(ListDigraph& g, WeightMap& wMap,
                  ListDigraph::Node& source, ListDigraph::Node& target,
                  Edges_T& sampleEdges, ArcIntMap& arcIdMap){
+    dprintf("Start SampleFixed");
+    vector<ListDigraph::Arc> toDelete;
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
         if (sampleEdges.test(arcIdMap[arc])){ // edge is in sampleEdges
             if (nextRand() <= wMap[arc]){ // sampling coin toss
                 wMap[arc] = 1.0;
             } else {
                 wMap[arc] = 0.0;
-                g.erase(arc);
+                //g.erase(arc);
+                toDelete.push_back(arc);
             }
         }
     }
+    for (ListDigraph::Arc &edge: toDelete) { // foreach arc in toDelete
+      g.erase(edge);
+    }  
 }
 
 /* This function samples the graph. The edges to sample are randomly selected.
@@ -826,6 +843,9 @@ void SampleFixed(ListDigraph& g, WeightMap& wMap,
 void SampleRandom(ListDigraph& g, WeightMap& wMap,
                   ListDigraph::Node& source, ListDigraph::Node& target,
                   double samplingProb, Edges_T& sampleEdges, ArcIntMap& arcIdMap){
+
+  dprintf("Start SampleRandom\n");
+  vector<ListDigraph::Arc> toDelete;
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
         if (g.source(arc) == source || g.target(arc) == target)
             continue;
@@ -835,10 +855,16 @@ void SampleRandom(ListDigraph& g, WeightMap& wMap,
                 wMap[arc] = 1.0;
             } else {
                 wMap[arc] = 0.0;
-                g.erase(arc);
+		toDelete.push_back(arc);
+                //g.erase(arc);
             }
         }
     }
+    // now delete all the edges that need deletion
+    for (ListDigraph::Arc &edge: toDelete) {// foreach arc in toDelete
+      g.erase(edge);
+    }  
+
 }
 
 void minimizeGraph(ListDigraph& g, WeightMap& wMap, ArcIntMap& arcIdMap, ListDigraph::Node& source, ListDigraph::Node& target){
@@ -868,6 +894,7 @@ class EdgeSubset{
 void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
                   ListDigraph::Node& source, ListDigraph::Node& target,
                   double samplingProb, Edges_T& sampleEdges, ArcIntMap& arcIdMap, vector<EdgeSubset>& chances){
+    dprintf("Starting SampleWeightedRandom");
     // Our sampling budget
     int budget = (int) ceil(countArcs(g) * samplingProb);
     // The total number of edges
@@ -879,6 +906,7 @@ void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
         idToArc[arcIdMap[arc]] = arc;
     }
 
+    vector<ListDigraph::Arc> toDelete;
     while (budget > 0 && chances.size() > 0){
         int index = (int) floor(nextRand() * chances.size());
         EdgeSubset es = chances[index];
@@ -891,7 +919,8 @@ void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
                     wMap[arc] = 1.0;
                 } else {
                     wMap[arc] = 0.0;
-                    g.erase(arc);
+                    toDelete.push_back(arc);
+                    //g.erase(arc);
                 }
                 if (budget <= 0)
                     break;
@@ -905,6 +934,11 @@ void SampleWeightedRandom(ListDigraph& g, WeightMap& wMap,
         for (end=index; end<chances.size() && chances[end].id==id; ++end);
         chances.erase(chances.begin()+start, chances.begin()+end);
     }
+
+    for (ListDigraph::Arc &edge: toDelete) { // for each arc in toDelete
+      g.erase(edge);
+    }  
+
     if (budget > 0){
         vector<int> remainingEdges;
         for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
@@ -943,8 +977,10 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
     ArcIntMap arcIdMap(g);
     ListDigraph::Node source;
     ListDigraph::Node target;
+    dprintf("Create graph\n");
     digraphCopy(gOrig, g).node(sourceOrig, source).node(targetOrig, target).arcMap(wMapOrig, wMap).arcMap(arcIdMapOrig, arcIdMap).run();
 
+    dprintf("Sampling the graph\n");
     // sample the graph
     if (fixed){
         SampleFixed(g, wMap, source, target, sampleEdges, arcIdMap);
@@ -956,6 +992,7 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
         }
     }
 
+    dprintf("Minimize graph\n");
     // post-sampling minimization
     minimizeGraph(g, wMap, arcIdMap, source, target);
 
@@ -966,10 +1003,12 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
         return 0.0;
     }
 
+    dprintf("Find good cuts\n");
     vector<Cut> cuts;
     vector< pair< vector<int>, int > > edgeSubsets;
     FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
 
+    dprintf("Solve graph\n");
     double prob = Solve(g, wMap, source, target, cuts);
     return prob;
 }
@@ -1135,12 +1174,14 @@ int main(int argc, char** argv)
     int sampleSize = atoi(argv[5]);
     cout << "#V\tE\tP\tT" << endl;
 
+    dprintf("Starting sampling loop\n");
     for (int i=0; i<sampleSize; i++){
         double startCPUTime = getCPUTime();
         double prob = iteration(gOrig, wMapOrig, arcIdMapOrig, sourceOrig, targetOrig, fixedSample, samplingProb, sampleEdges, true, weighted, chances);
         double duration = getCPUTime() - startCPUTime;
         cout << prob << "\t" << duration << endl;
         total += prob;
+	dprintf("Finished iteration %d\n",i);
     }
     cout << "#>>result = " << total/sampleSize << endl;
     return 0;
