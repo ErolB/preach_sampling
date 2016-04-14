@@ -420,15 +420,12 @@ int main(){
     vector< pair< vector<int>, double > > output;
     vector< pair< vector<int>, int > > edgeSubsets;
     FindSomeGoodCuts(gOrig, sourceOrig, targetOrig, cuts, edgeSubsets);
-
-    for (int i = 1; i < cuts.size(); i++){
+    for (int i = 1; i <= cuts.size(); i++){
         vector<int> middle = cvtBitset(cuts[i-1].getMiddle());
         output.push_back(make_pair(middle, i));
         vector<int> next = cvtBitset(cuts[i-1].getRight() & cuts[i].getLeft());
         output.push_back(make_pair(next, (double) i + 0.5));
     }
-    vector<int> final = cvtBitset(cuts[cuts.size()-1].getMiddle());
-    output.push_back(make_pair(final, cuts.size()));
 
     // write data to file
     // values are comma separated
@@ -436,11 +433,9 @@ int main(){
     data_file.open(output_path);
     if (data_file.is_open()) {
         for (int i = 0; i < output.size(); i++){
-            data_file << output[i].second << ",";
             for (int j = 0; j < output[i].first.size(); j++) {
-                data_file << output[i].first[j]+1 << ",";
+                data_file << output[i].first[j]+1 << "," << output[i].second << endl;
             }
-            data_file << endl;
         }
     }
     data_file.close();
