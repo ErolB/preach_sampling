@@ -5,6 +5,5 @@ bin/*
 *.cbp
 *.depend
 *.layout
-*.html
 *.png
 
