@@ -653,6 +653,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
     // Build a dictionary of edgeId -> source and target node ids
     // Will need it with each collapsation operation within this sausage
     map< int, vector<int> > edgeTerminals;
+
     FOREACH_BS(edgeId, sausage){
         vector<int> terminals;
         ListDigraph::Arc arc = g.arcFromId(edgeId);
@@ -661,15 +662,35 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
         edgeTerminals[edgeId] = terminals;
     }
 
+    vector<int> edgeIdList;
+    for (int edgeId = 0; edgeId < sausage.size(); edgeId++) {
+        if (sausage[edgeId]) {
+            edgeIdList.push_back(edgeId);  // edgeId indexing is zero-based
+        }
+    }
+/*
+    //randomly rearrange edge IDs
+    vector<int> temp;
+    int size = edgeIdList.size();
+    while(temp.size() != size){
+        int random = (int) rand() / 1000;
+        int index = (random % edgeIdList.size());
+        temp.push_back(edgeIdList[index]);
+        edgeIdList.erase(edgeIdList.begin() + index);
+    }
+    edgeIdList = temp;
+*/
+
     //start adding the edges in the current sausage
     //here we collapse after each addition (arbitrary)
     int edgeCounter = 0;
-    FOREACH_BS(edgeId, sausage){ ///////////////////////// ISSUE HERE ???
-        edgeCounter ++;
-        //cout << "Adding edge " << edgeCounter;
-        poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
-        //cout << ", Collapsing!" << endl;
-        poly.collapse(sausage, edgeTerminals, endNodes);
+    for (int edgeId: edgeIdList) {
+        if (sausage[edgeId]) {
+            //cout << "Adding edge " << edgeCounter;
+            poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
+            //cout << ", Collapsing!" << endl;
+            poly.collapse(sausage, edgeTerminals, endNodes);
+        }
     }
 
     //Advance the polynomial: make it ready for next sausage

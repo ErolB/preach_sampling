@@ -403,6 +403,8 @@ vector<int> cvtBitset(Nodes_T input){
     return positions;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////// main function
+
 int main(){
     ListDigraph gOrig;
     WeightMap wMapOrig(gOrig); // keeps track of weights
