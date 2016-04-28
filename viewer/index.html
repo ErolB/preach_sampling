@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  .node {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
+
+  .link {
+    stroke: #999;
+    stroke-opacity: .9;
+  }
+
+</style>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.16/d3.min.js"></script>
+  <script>
+
+    var width = 960,
+    height = 500;
+
+    var color = d3.scale.category20();
+
+    var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(60)
+    .size([width, height]);
+
+    var drag = force.drag()
+    .on("dragstart", dragstart);
+
+    var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  svg.append("defs").selectAll("marker")
+    .data(["suit", "licensing", "resolved"])
+  .enter().append("marker")
+    .attr("id", function(d) { return d; })
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 25)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+  .append("path")
+    .attr("d", "M0,-5L10,0L0,5 L10,0 L0, -5")
+    .style("stroke", "#4679BD")
+    .style("opacity", "0.9");
+
+
+    function dragstart(d) {
+      d3.select(this).classed("fixed", d.fixed = true);
+    }
+
+var links = []; // array of links
+var nodes = []; // array of nodes
+var nodesByName = {}; // index of nodes
+var cutWidth = 0; // spacing between cuts. Position is (cut-.5)*cutWidth
+
+function makeNode(id){
+  return nodesByName[id] || (nodesByName[id] = { name: id });
+}
+
+/**
+ * Read a text file and call processor
+ * @param  {[type]} files File to read (only one supported)
+ * @param  {[type]} fct   Callback function with data
+ * @return {[type]}       None
+ */
+ function readTextFile(files, fct){
+  var file = files[0];
+  var reader = new FileReader();
+  reader.onload = function(event){
+    var data = event.target.result;
+    // call callback
+    fct(data); 
+  };
+
+  reader.readAsText(file);
+  return;
+}
+
+function loadGraph(files){
+  readTextFile(files, function(data){
+    links = d3.dsv(' ').parseRows(data, function(d){
+      return {
+        source: d[0],
+        target: d[1], 
+        weight: +d[2]
+      };
+    });
+
+    nodesByName = {};
+
+    links.forEach(function(link){
+      link.source = makeNode(link.source);
+      link.target = makeNode(link.target);
+    });
+
+    nodes = d3.values(nodesByName);
+
+    force
+    .nodes(nodes)
+    .links(links)
+    .start();
+
+
+    var link = svg.selectAll(".link")
+    .data(links)
+    .enter().append("line")
+    .attr("class", "link")
+    .style("stroke-width", function(d) { return Math.sqrt(d.weight); });
+
+    var node = svg.selectAll(".node")
+    .data(nodes)
+    .enter().append("circle")
+    .attr("class", "node")
+    .attr("r", 5)
+    .style("fill", function(d) { 
+      return color(d.cut); })
+    .call(force.drag);
+
+    node.append("title")
+    .text(function(d) { return d.name; });
+
+    force.on("tick", function() {
+      // reset node coordinates based on cuts
+      nodes.forEach(function(node){
+        if (node.cut && node.cut == Math.floor(node.cut)) {
+          node.x = 5+(node.cut-1)*cutWidth;
+        }
+      });
+
+      link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; })
+      .style("marker-end", "url(#suit)");
+
+      node.attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+    });
+
+  });
+}
+
+function loadCuts(files){
+  readTextFile(files, function(data){
+    var nodeInfo = d3.csv.parseRows(data, function(d){
+      var node = nodesByName[ d[0] ];
+      node.cut = +d[1];
+    });
+
+    var maxCut = d3.max(d3.values(nodesByName), 
+      function(node){ return node.cut; });
+    cutWidth = (width-10)/(maxCut-1);
+    console.log(maxCut, cutWidth, width);
+
+    svg.selectAll(".node")
+    .style("fill", function(d) { 
+      return color(d.cut); })
+    .call(force.drag);
+
+    force.start();
+  });
+}
+
+</script>
+
+<input type="file" name="loadGraph" onchange="loadGraph(this.files)">
+<input type="file" name="loadGraph" onchange="loadCuts(this.files)">
+</body>
