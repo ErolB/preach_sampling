@@ -8,9 +8,10 @@
 #endif
 
 #include "preach.h"
-#include "preprocess.h"
-#include "probing.h"
-#include "graph_calc.h"
+#include "Graph.h"
+#include "Cut.h"
+#include "Sampling.h"
+#include "Probing.h"
 
 using namespace std;
 using lemon::ListDigraph;
@@ -31,75 +32,18 @@ const string SAMPLING_RANDOM = "rand";
 const string SAMPLING_FIXED_RANDOM = "fixrand";
 const string SAMPLING_FIXED_WEIGHTED_RANDOM = "fixwrand";
 
+void ReadList(string filename, vector<string>& list) {
+	fstream in(filename.data());
+	string item;
+	while (!in.eof()) {
+		item = "";
+		in >> item;
 
-
-/*Prints the graph in node IDs*/
-void PrintGraph(ListDigraph& g){
-    for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
-        cout << g.id(g.source(arc)) << " " << g.id(g.target(arc)) << endl;
-    }
-}
-
-/*Starting from a vertex cut, recursively finds all other cuts to the right*/
-void FindAllCuts(Cut& currentCut, vector<Cut>& cuts,  ListDigraph& g, ListDigraph::Node target){
-    Nodes_T currentMiddle = currentCut.getMiddle();
-    Nodes_T currentLeft = currentCut.getLeft();
-    Nodes_T currentRight = currentCut.getRight();
-    Edges_T currentCovered = currentCut.getCoveredEdges();
-
-    // Go through all nodes in the cut, try to replace it with neighbors
-    FOREACH_BS(nodeId, currentMiddle){
-        Nodes_T middle = currentMiddle;
-        Nodes_T left = currentLeft;
-        Nodes_T right = currentRight;
-        Edges_T covered = currentCovered;
-        ListDigraph::Node node = g.nodeFromId(nodeId);
-		// Loop over all neighbors of the node
-		bool added = false;
-        for (ListDigraph::OutArcIt arc(g, node); arc != INVALID; ++arc){
-            ListDigraph::Node next = g.target(arc);
-            int nextId = g.id(next);
-            if (nextId == g.id(target)){ // cut connected to target, STOP HERE
-                added = false;
-                break;
-            }else if (right[nextId]){ // add from right to middle
-                added = true;
-                right.reset(nextId);
-                middle.set(nextId);
-                covered.set(g.id(arc));
-            }
-        }
-        if (added){ // added at least one node to the cut
-            middle.reset(nodeId);
-            left.set(nodeId);
-            // mark as covered: all edges going from the middle not to the right
-            FOREACH_BS(nodeId, middle){
-                ListDigraph::Node middleNode = g.nodeFromId(nodeId);
-                for (ListDigraph::OutArcIt arc(g, middleNode); arc != INVALID; ++arc){
-                    if (!right[g.id(g.target(arc))]){
-                        covered.set(g.id(arc));
-                    }
-                }
-            }
-            Cut newCut(left, middle, right, covered);
-            cuts.push_back(newCut);
-            FindAllCuts(newCut, cuts, g, target);
-        }
-    }
-}
-
-/*prints a cut*/
-void PrintCut(Cut& cut, ListDigraph& g){
-    Nodes_T nodes = cut.getMiddle();
-    FOREACH_BS(id, nodes){
-        cout << id << " ";
-    }
-    cout << " : ";
-    Edges_T covered = cut.getCoveredEdges();
-    FOREACH_BS(id, covered){
-        cout << g.id(g.source(g.arcFromId(id))) << "-" << g.id(g.target(g.arcFromId(id))) << " ";
-    }
-    cout << endl;
+		if (item.empty())
+			continue;
+		list.push_back(item);
+	}
+	in.close();
 }
 
 /*prints cuts*/
@@ -114,11 +58,6 @@ void EdgesAsBitset(ListDigraph& g, Edges_T& edges){
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
         edges.set(g.id(arc));
     }
-}
-
-/*Just for debugging - ignore*/
-bool compareCuts(Cut cut1, Cut cut2){
-    return (cut1.getMiddle().count() < cut2.getMiddle().count());
 }
 
 string joinString(vector<string>& parts, string delim){
@@ -170,34 +109,6 @@ string edgesToReferenceString(ListDigraph& g, WeightMap& wMap, NodeNames& nNames
     return ss.str();
 }
 
-bool CheckProcessedReference(ListDigraph& g, WeightMap& wMap, NodeNames& nNames, string reference){
-    vector<string> edges;
-    // The reference string has to have leading and trailing quotes
-    //reference.erase(0,1);
-    //reference.erase(reference.length()-1, 1);
-    splitString(reference, edges, '#');
-    for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
-        string arcString = arcToString(g, wMap, nNames, arc);
-        vector<string>::iterator it = find(edges.begin(), edges.end(), arcString);
-        if (it == edges.end()){
-            return false;
-        } else{
-            edges.erase(it);
-        }
-    }
-    if (edges.size() == 0)
-        return true;
-    else{
-        return false;
-    }
-}
-
-void minimizeGraph(ListDigraph& g, WeightMap& wMap, ArcIntMap& arcIdMap, ListDigraph::Node& source, ListDigraph::Node& target){
-    RemoveIsolatedNodes(g, source, target);
-    CollapseELementaryPaths(g, wMap, arcIdMap, source, target);
-    RemoveSelfCycles(g);
-}
-
 /*Represents an edge subset, with its sampling score*/
 class EdgeSubset{
     public:
@@ -211,6 +122,14 @@ class EdgeSubset{
     }
 };
 
+
+double SuccessProb(vector<int> subset, ListDigraph& gOrig, WeightMap& wMapOrig){
+    double result = 1.0;
+    FOREACH_STL(arcId, subset){
+        result *= (1.0 - wMapOrig[gOrig.arcFromId(arcId)]);
+    }END_FOREACH;
+    return result + 0.001;
+}
 
 int main(int argc, char** argv)
 {

@@ -5,6 +5,7 @@
 #define dprintf(fmt, ...)
 #endif
 
+#ifndef PREACH_SAMPLING_CUT_H
 #include "preach.h"
 
 const string SOURCE = "SOURCE";

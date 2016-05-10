@@ -33,6 +33,9 @@
 #define MAX_EDGES 1024
 #define SURE 1.0
 
+#ifndef PREACH_H
+#define PREACH_H
+
 using namespace std;
 
 typedef bitset<MAX_NODES> Nodes_T;
@@ -81,27 +84,6 @@ double getCPUTime(){
 // macro to smoth up the use of bitsets
 #define FOREACH_BS(v, vSet)	  \
 	for (size_t v=vSet._Find_first(); v!=vSet.size(); v=vSet._Find_next(v))
-
-/*A class modeling a vertex cut*/
-class Cut{
-    Nodes_T middle; // The nodes in the
-    Nodes_T left; // Set of nodes on the left
-    Nodes_T right; // Set of nodes on the right
-    Edges_T coveredEdges; // Set of edges covered by this cut (left and middle)
-
-public:
-    Cut(){}
-
-    // consturctor for a specified cut
-	Cut(Nodes_T& _left, Nodes_T& _middle, Nodes_T& _right, Edges_T& _covered):
-		left(_left), middle(_middle), right(_right), coveredEdges(_covered){}
-
-    Nodes_T& getMiddle(){return middle;}
-    Nodes_T& getRight(){return right;}
-    Nodes_T& getLeft(){return left;}
-    Edges_T& getCoveredEdges(){return coveredEdges;}
-    int size(){return middle.count();}
-};
 
 class Term{
     Nodes_T z; // Reachable nodes
@@ -315,6 +297,8 @@ public:
         newTerms.swap(terms); //replace terms with the new collapsed terms
     }
 };
+
+#endif
 
 
 
