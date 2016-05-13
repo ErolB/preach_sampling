@@ -63,48 +63,49 @@ void RefineCuts(vector<Cut>& cuts, ListDigraph& g, ListDigraph::Node& target, ve
     // grow each cut (if necessary) into a good cut
     vector<Cut> goodCuts;
     FOREACH_STL(cut, cuts){
-    Nodes_T right = cut.getRight();
-    Nodes_T middle = cut.getMiddle();
-    Edges_T covered = cut.getCoveredEdges();
-    int cutsize = middle.count();
-    // repeat until nothing changes
-    while(true){
-    // for each node on the right, make sure its outgoing neighbors are all on the right also
-    vector<int> toAdd;
-    FOREACH_BS(nodeId, right){
-    ListDigraph::Node node = g.nodeFromId(nodeId);
-    vector<int> backedges;
-    for (ListDigraph::OutArcIt arc(g, node); arc != INVALID; ++arc){
-    if (!right[g.id(g.target(arc))]){ // back edge
-    backedges.push_back(g.id(arc));
-    }
-    }
-    if (backedges.size() > 0){ // some backedges are there
-    toAdd.push_back(nodeId);
-    pair<vector<int>, int> subset = make_pair(backedges, cutsize);
-    edgeSubsets.push_back(subset);
-    }
-    }
-    if (toAdd.size() == 0)
-    break;
-    FOREACH_STL(nodeId, toAdd){
-    right.reset(nodeId);
-    middle.set(nodeId);
+        Nodes_T right = cut.getRight();
+        Nodes_T middle = cut.getMiddle();
+        Edges_T covered = cut.getCoveredEdges();
+        int cutsize = middle.count();
+        // repeat until nothing changes
+        while(true){
+            // for each node on the right, make sure its outgoing neighbors are all on the right also
+            vector<int> toAdd;
+            FOREACH_BS(nodeId, right){
+                ListDigraph::Node node = g.nodeFromId(nodeId);
+                vector<int> backedges;
+                for (ListDigraph::OutArcIt arc(g, node); arc != INVALID; ++arc){
+                    if (!right[g.id(g.target(arc))]){ // back edge
+                        backedges.push_back(g.id(arc));
+                    }
+                }
+                if (backedges.size() > 0){ // some backedges are there
+                    toAdd.push_back(nodeId);
+                    pair<vector<int>, int> subset = make_pair(backedges, cutsize);
+                    edgeSubsets.push_back(subset);
+                }
+            }
+            if (toAdd.size() == 0)
+                break;
+            FOREACH_STL(nodeId, toAdd){
+                right.reset(nodeId);
+                middle.set(nodeId);
+            }END_FOREACH;
+        }
+        //Now some new edges can be covered due to moving nodes to the middle
+        //mark these edges as covered
+        FOREACH_BS(nodeId, middle){
+            ListDigraph::Node middleNode = g.nodeFromId(nodeId);
+            for (ListDigraph::OutArcIt arc(g, middleNode); arc != INVALID; ++arc){
+                if (!right[g.id(g.target(arc))]){
+                    covered.set(g.id(arc));
+                }
+            }
+        }
+        //add the new good cut
+        goodCuts.push_back(Cut(cut.getLeft(), middle, right, covered));
     }END_FOREACH;
-    }
-    //Now some new edges can be covered due to moving nodes to the middle
-    //mark these edges as covered
-    FOREACH_BS(nodeId, middle){
-    ListDigraph::Node middleNode = g.nodeFromId(nodeId);
-    for (ListDigraph::OutArcIt arc(g, middleNode); arc != INVALID; ++arc){
-    if (!right[g.id(g.target(arc))]){
-    covered.set(g.id(arc));
-    }
-    }
-    }
-    //add the new good cut
-    goodCuts.push_back(Cut(cut.getLeft(), middle, right, covered));
-    }END_FOREACH;
+
     cuts = goodCuts;
 
     // Minimize good cuts:
@@ -112,29 +113,30 @@ void RefineCuts(vector<Cut>& cuts, ListDigraph& g, ListDigraph::Node& target, ve
     // Then move it to the left group
     vector<Cut> bestCuts;
     FOREACH_STL(cut, cuts){
-    Nodes_T middle = cut.getMiddle();
-    Nodes_T left = cut.getLeft();
-    Nodes_T right = cut.getRight();
-    vector<int> toMove;
-    FOREACH_BS(nodeId, middle){
-    // make sure it has at least one edge to the right
-    bool hasRight = false;
-    for (ListDigraph::OutArcIt arc(g, g.nodeFromId(nodeId)); arc != INVALID; ++arc){
-    if (right[g.id(g.target(arc))]){
-    hasRight = true;
-    break;
-    }
-    }
-    if (!hasRight){
-    toMove.push_back(nodeId);
-    }
-    }
-    FOREACH_STL(nodeId, toMove){
-    middle.reset(nodeId);
-    left.set(nodeId);
+        Nodes_T middle = cut.getMiddle();
+        Nodes_T left = cut.getLeft();
+        Nodes_T right = cut.getRight();
+        vector<int> toMove;
+        FOREACH_BS(nodeId, middle){
+            // make sure it has at least one edge to the right
+            bool hasRight = false;
+            for (ListDigraph::OutArcIt arc(g, g.nodeFromId(nodeId)); arc != INVALID; ++arc){
+                if (right[g.id(g.target(arc))]){
+                    hasRight = true;
+                    break;
+                }
+            }
+            if (!hasRight){
+            toMove.push_back(nodeId);
+            }
+        }
+        FOREACH_STL(nodeId, toMove){
+            middle.reset(nodeId);
+            left.set(nodeId);
+        }END_FOREACH;
+        bestCuts.push_back(Cut(left, middle, right, cut.getCoveredEdges()));
     }END_FOREACH;
-    bestCuts.push_back(Cut(left, middle, right, cut.getCoveredEdges()));
-    }END_FOREACH;
+
     cuts = bestCuts;
 
     // Last: remove redundant cuts again
@@ -203,7 +205,14 @@ void FillEdgeSubsets(ListDigraph& g, vector<Cut>& cuts, vector< pair< vector<int
 }
 
 /*Finds *SOME* good cuts: steps from a cut to the next by
-replacing every node by all of its neighbors*/
+replacing every node by all of its neighbors.
+
+This function generates a set of consecutive cuts (which may share nodes with neighboring cuts). Starting with the
+ initial cut (given by the function createFirstCut), it iterates over every node in the current cut. For each of the
+ node's outgoing edges. If an edge connects to a node on the right side of the cut, its target node is added to the
+ next cut. The next cut is then processed to ensure that it fits a set of requirements. It must be a genuine cut and not
+ have any backward edges.
+*/
 void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Node target, vector<Cut>& cuts, vector< pair< vector<int>, int > > & edgeSubsets){
     //start by forming the first cut: adjacent to source
     Cut firstCut = createFirstCut(g, source, target);
@@ -217,15 +226,18 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
     cuts.push_back(firstCut);
     bool added = true;
     while (added){ // repeat until nothing new is added
+        //
         Nodes_T middle = currentMiddle;
         Nodes_T left = currentLeft;
         Nodes_T right = currentRight;
         Edges_T covered = currentCovered;
         added = false;
+        // iterate over the node in the current cut
         FOREACH_BS(nodeId, currentMiddle){
             ListDigraph::Node node = g.nodeFromId(nodeId);
             vector<int> nextNodes;
             vector<int> nextArcs;
+            // iterate over the node's outgoing edges
             for (ListDigraph::OutArcIt arc(g, node); arc != INVALID; ++arc){
                 ListDigraph::Node next = g.target(arc);
                 int nextId = g.id(next);
@@ -233,13 +245,16 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
                     nextNodes.clear();
                     nextArcs.clear();
                     break;
-                }else if (right[nextId]){ // eligible for moving from right to middle
+                }else if (right[nextId]){
+                    // If the edge's target is to the right of the current node, it is eligible for moving from the
+                    // right to the middle.
                     nextNodes.push_back(nextId);
                     nextArcs.push_back(g.id(arc));
                 }
             }
             if (nextNodes.size() > 0){ // There are nodes to move from right to left
                 added = true;
+                // adjust the bitsets to represent the new cut
                 FOREACH_STL(nextId, nextNodes){
                         right.reset(nextId);
                         middle.set(nextId);
@@ -251,7 +266,7 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
                 left.set(nodeId);
             }
         }
-        if (added){
+        if (added){  // if a new cut will be added
             // mark as covered: all edges going from the middle not to the right
             FOREACH_BS(nodeId, middle){
                 ListDigraph::Node middleNode = g.nodeFromId(nodeId);
@@ -261,8 +276,10 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
                     }
                 }
             }
+            // create a new cut object and add it to the vector
             Cut newCut(left, middle, right, covered);
             cuts.push_back(newCut);
+            // the new cut becomes the current cut
             currentMiddle = middle;
             currentLeft = left;
             currentRight = right;

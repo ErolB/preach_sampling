@@ -18,7 +18,7 @@ classify_nodes.o: classify_nodes.cpp
 cut.o: Cut.cc Cut.h
 	g++ $(OBJ_FLAGS) Cut.cc
 
-graph.o: Graph.cc Graph.h
+graph.o: Graph.cc Graph.h cut.o
 	g++ $(OBJ_FLAGS) Graph.cc
 
 sampling.o: Sampling.cc Sampling.h
