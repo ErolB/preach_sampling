@@ -2,7 +2,7 @@
 // Created by erol on 5/9/16.
 //
 
-#include "preach.h"
+#include "Probing.h"
 
 /* This function does random probing.
 ** Does multiple random sampling and selects the edge set that makes the least runtime on average

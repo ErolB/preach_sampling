@@ -2,9 +2,175 @@
 // Created by erol on 5/9/16.
 //
 
-#include "preach.h"
 #include "Graph.h"
-#include "Cut.h"
+
+using lemon::ListDigraph;
+
+// Term class
+
+string Term::toString(){
+    ostringstream result;
+    //result << coeff << "X" << x.to_string<char,std::string::traits_type,std::string::allocator_type>()
+    //    << "Y" << y.to_string<char,std::string::traits_type,std::string::allocator_type>()
+    //    << "Z" << z.to_string<char,std::string::traits_type,std::string::allocator_type>()
+    //    << "W" << w.to_string<char,std::string::traits_type,std::string::allocator_type>();
+    result << coeff << "X" << x.count() << "Y" << y.count() << "Z" << z.count() << "W" << w.count();
+    return result.str();
+}
+
+void Term::multiply(int subscript, double p, bool inverse){
+    if (inverse){
+        y.set(subscript);
+        coeff *= (1-p);
+    }else{
+        x.set(subscript);
+        coeff *= p;
+    }
+}
+
+double Term::getCoeff(){return coeff;}
+
+void Term::addToCoeff(double increment){coeff += increment;}
+
+bool Term::hasZ(){return z.any();}
+
+bool Term::collapse(Edges_T& midEdges, map< int, vector<int> >& edgeTerminals, Nodes_T& endNodes, Nodes_T& newZ){
+    int edges[MAX_EDGES][2];
+    int count;
+    vector<int> terminals;
+    Nodes_T visited;
+    Nodes_T copy;
+
+    /////FIRST: traverse the x edges and see which end nodes are reachable
+    count = 0;
+    FOREACH_BS(edge, x){ // form the list of edges to traverse
+        terminals = edgeTerminals[edge];
+        edges[count][0] = terminals[0];
+        edges[count][1] = terminals[1];
+        count ++;
+    }
+    visited = z;
+    while (true){ // traverse the edges, setting targets as true until nothing changes
+        copy = visited;
+        for (int i=0; i<count; i++){
+            if (visited[edges[i][0]]){
+                visited.set(edges[i][1]);
+            }
+        }
+        if (copy == visited) break;
+    }
+    Nodes_T reachable = endNodes & visited; // This is now the set of sure reachable nodes
+
+    /////SECOND: traverse all edges except y and see which end nodes are unreachable
+    Edges_T yInverse = midEdges & ~y;
+    count = 0;
+    FOREACH_BS(edge, yInverse){
+        terminals = edgeTerminals[edge];
+        edges[count][0] = terminals[0];
+        edges[count][1] = terminals[1];
+        count ++;
+    }
+    visited = z;
+    while (true){ // traverse the edges, setting targets as true until nothing changes
+        copy = visited;
+        for (int i=0; i<count; i++){
+            if (visited[edges[i][0]]){
+                visited.set(edges[i][1]);
+            }
+        }
+        if (copy == visited) break;
+    }
+    Nodes_T unreachable = endNodes & ~visited; // This is now the set of sure unreachable nodes
+
+    /////LAST: if all endNodes are either reachable or unreachable: collapsed
+    /////else (at least one node is neither reachable nor unreachable): doesn't collapse
+    if (endNodes == (reachable|unreachable)){
+        newZ = reachable;
+        return true;
+    }else{
+        return false;
+    }
+}
+
+// Polynomial class
+
+/*Adds and edge: mutiplies the whole polynomial by
+    pX_subscript + (1-p)Y_subscript
+    DOES NOT COLLAPSE AUTOMATICALLY*/
+void Polynomial::addEdge(int subscript, double p){
+    //a new vector to accumulate the new terms
+    vector<Term> newTerms;
+    if (p > 0.0000001){
+        FOREACH_STL(term, terms){
+                //Multiply by X term
+                Term xTerm = term;
+                xTerm.multiply(subscript, p, false);
+                newTerms.push_back(xTerm);
+            }END_FOREACH;
+    }
+    if (p < 0.999999){
+        FOREACH_STL(term, terms){
+                //Multiply by Y term
+                Term yTerm = term;
+                yTerm.multiply(subscript, p, true);
+                newTerms.push_back(yTerm);
+            }END_FOREACH;
+    }
+    //swap newTerms with terms
+    newTerms.swap(terms);
+}
+
+double Polynomial::getResult(){
+    //SANITY CHECKS
+    if (terms.size() == 1){
+        assert(terms.front().getCoeff() > 0.9999);
+    } else {
+        assert(terms.size() == 2);
+        double totalCoeff = terms.front().getCoeff() + terms.back().getCoeff();
+        assert(totalCoeff < 1.01 && totalCoeff > 0.99);
+    }
+
+    if (terms.front().hasZ()){
+        assert(terms.size() == 1 || !terms.back().hasZ());
+        return terms.front().getCoeff();
+    }else{
+        assert(terms.back().hasZ());
+        return terms.back().getCoeff();
+    }
+}
+
+/*Collapses the polynomial: iterates over each term
+    to collapse it if possible.
+    midEdges are all edges currently considered between
+    the past cut and the next one.
+    edgeTerminals is a hash from edge id to its source and target ids
+    endNodes are the nodes in the next cut*/
+void Polynomial::collapse(Edges_T& midEdges, map< int, vector<int> >& edgeTerminals, Nodes_T& endNodes){
+    vector<Term> newTerms;
+    FOREACH_STL(term, terms){
+            // check collapsing of term
+            Nodes_T z; // will hold the nodes to which the term collapses (Z)
+            bool collapsed = term.collapse(midEdges, edgeTerminals, endNodes, z);
+            if (collapsed){ // term DOES collapse to z
+                // Now we find the corresponding endTerm, or create it
+                Term endTerm;
+                string endTermId = z.to_string< char,char_traits<char>,allocator<char> >();
+                if (endTerms.find(endTermId) != endTerms.end()){ // endTerm found
+                    endTerm = endTerms[endTermId];
+                }else{ // endTerm not found, create it
+                    Nodes_T w = endNodes & ~z;
+                    endTerm = Term(z, w);
+                }
+                endTerm.addToCoeff(term.getCoeff());
+                endTerms[endTermId] = endTerm;
+            }else { // term DOES NOT collapse
+                newTerms.push_back(term);
+            }
+        }END_FOREACH;
+    newTerms.swap(terms); //replace terms with the new collapsed terms
+}
+
+// stand-alone functions
 
 /*Prints the graph in node IDs*/
 void PrintGraph(ListDigraph& g){
@@ -20,6 +186,13 @@ bool EdgeExists(ListDigraph& g, ListDigraph::Node& source, ListDigraph::Node& ta
             return true;
     }
     return false;
+}
+
+/*Gets all edges as a bitset*/
+void EdgesAsBitset(ListDigraph& g, Edges_T& edges){
+    for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){
+        edges.set(g.id(arc));
+    }
 }
 
 // map names to nodes
@@ -267,127 +440,6 @@ void RemoveSelfCycles(ListDigraph& g){
     }
 }
 
-/*removes cuts that are masked by smaller cuts*/
-void RemoveRedundantCuts(vector<Cut>& cuts){
-    for (size_t i=0; i<cuts.size(); i++){
-        Cut currenti = cuts.at(i);
-        for (size_t j=i+1; j<cuts.size(); j++){
-            Cut currentj = cuts.at(j);
-            // see if one of them is contained in the other
-            if ((~currenti.getMiddle() & currentj.getMiddle()).none()){
-                // j contained in i: delete i and break
-                cuts.erase(cuts.begin() + i);
-                i--;
-                break;
-            }
-            if ((~currentj.getMiddle() & currenti.getMiddle()).none()){
-                //i contained in j: delete j
-                cuts.erase(cuts.begin() + j);
-                j--;
-            }
-        }
-    }
-}
-
-/*Does the needed preprocessing of the graph:
- * adding source & sink
- * remove isolated nodes
- * collapse elementary paths
- * see comments of each function for details
- * */
-void Preprocess(ListDigraph& g,
-                WeightMap& wMap,
-                NodeNames& nMap,
-                NameToNode& nodeMap,
-                ArcIntMap& arcIdMap,
-                string sourcesFile,
-                string targetsFile,
-                string pre){
-    UnifyTerminals(g, wMap, nMap, nodeMap, arcIdMap, sourcesFile, targetsFile);
-    if (pre == PRE_YES){
-        RemoveIsolatedNodes(g, nodeMap[SOURCE], nodeMap[SINK]);
-        CollapseELementaryPaths(g, wMap, arcIdMap, nodeMap[SOURCE], nodeMap[SINK]);
-        RemoveSelfCycles(g);
-    }
-    //EXTRA STEP: make sure source and sink are not directly connected
-    ListDigraph::Node source = nodeMap[SOURCE];
-    ListDigraph::Node sink = nodeMap[SINK];
-    for (ListDigraph::OutArcIt arc(g, source); arc != INVALID; ++arc){
-        if (g.id(g.target(arc)) == g.id(sink)){ // direct source-sink connection - isolate with a middle node
-            ListDigraph::Node isolator = g.addNode();
-            nodeMap["ISOLATOR"] = isolator;
-            nMap[isolator] = "ISOLATOR";
-            ListDigraph::Arc head = g.addArc(isolator, sink);
-            wMap[head] = wMap[arc];
-            arcIdMap[head] = g.id(head);
-            ListDigraph::Arc tail = g.addArc(source, isolator);
-            arcIdMap[tail] = g.id(tail);
-            wMap[tail] = SURE;
-            g.erase(arc);
-            break;
-        }
-    }
-}
-
-/*Finds reachability probability given the vertex cuts
-    Starts from the source to the first cut
-    Then removes all the obsolete cuts and pick a next cut
-    An obsolete cut is a cut whose middle set intersects with
-    the left set of the current cut*/
-double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts){
-    //FOR DEBUGGING - REMOVE
-    //sort(cuts.begin(), cuts.end(), compareCuts);
-    // set up the source term and start the polynomial
-    Nodes_T zSource, wSource;
-    zSource.set(g.id(source));
-    vector<Term> sourceTerm;
-    sourceTerm.push_back(Term(zSource, wSource, 1.0));
-    Polynomial poly(sourceTerm);
-
-    Edges_T covered; // This will hold the set of covered edges so far
-    Edges_T sausage; // This will hold the current sausage: edges being considered for addition
-
-    // repeat until no cuts left
-    dprintf("starting loop\n");
-    while(cuts.size() > 0){
-        dprintf("beginning iteration\n");
-        //select a cut: here we just select the first one (arbitrary)
-        Cut nextCut = cuts.front();
-        //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
-        //cout << nextCut.size() << "  ";
-        cuts.erase(cuts.begin());
-        // Identify the sausage: The current set of edges in question
-        sausage = nextCut.getCoveredEdges() & ~covered;
-        //cout << ", Sausage size: " << sausage.count() << endl;
-        //cout << sausage.count() << "  ";
-        //Consume the current sausage
-        try{
-            ConsumeSausage(g, wMap, poly, sausage, nextCut.getMiddle());
-        }catch(exception& e){
-            cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
-            exit(3);
-        }
-        //mark the sausage as covered
-        covered |= sausage;
-        //remove obsolete cuts
-        RemoveObsoleteCuts(cuts, nextCut);
-    }
-    dprintf("Loop finished\n");
-
-    // Last: add the edges between the last cut and the target node
-    Edges_T allEdges; // set of all edges in the network
-    EdgesAsBitset(g, allEdges);
-    sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
-    Nodes_T targetSet; // The last stop
-    targetSet.set(g.id(target));
-    //cout << "Last step, Sausage size: " << sausage.count() << endl;
-    //cout << "1  " << sausage.count() << "  ";
-    ConsumeSausage(g, wMap, poly, sausage, targetSet);
-
-    //RESULT
-    return poly.getResult();
-    //return -1.0;
-}
 
 
 

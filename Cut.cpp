@@ -2,22 +2,21 @@
 // Created by erol on 5/9/16.
 //
 
-#include "preach.h"
 #include "Cut.h"
 
-Cut::getMiddle(){
+Nodes_T& Cut::getMiddle(){
     return this->middle;
 }
-Cut::getRight(){
+Nodes_T& Cut::getRight(){
     return this->right;
 }
-Cut::getLeft(){
+Nodes_T& Cut::getLeft(){
     return this->left;
 }
-Cut::size(){
+int Cut::size(){
     return this->middle.count();
 }
-Cut::getCoveredEdges(){
+Edges_T& Cut::getCoveredEdges(){
     return coveredEdges;
 }
 
@@ -385,4 +384,133 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
 
     //Advance the polynomial: make it ready for next sausage
     poly.advance();
+}
+
+/*removes cuts that are masked by smaller cuts*/
+void RemoveRedundantCuts(vector<Cut>& cuts){
+    for (size_t i=0; i<cuts.size(); i++){
+        Cut currenti = cuts.at(i);
+        for (size_t j=i+1; j<cuts.size(); j++){
+            Cut currentj = cuts.at(j);
+            // see if one of them is contained in the other
+            if ((~currenti.getMiddle() & currentj.getMiddle()).none()){
+                // j contained in i: delete i and break
+                cuts.erase(cuts.begin() + i);
+                i--;
+                break;
+            }
+            if ((~currentj.getMiddle() & currenti.getMiddle()).none()){
+                //i contained in j: delete j
+                cuts.erase(cuts.begin() + j);
+                j--;
+            }
+        }
+    }
+}
+
+/*Does the needed preprocessing of the graph:
+ * adding source & sink
+ * remove isolated nodes
+ * collapse elementary paths
+ * see comments of each function for details
+ * */
+void Preprocess(ListDigraph& g,
+                WeightMap& wMap,
+                NodeNames& nMap,
+                NameToNode& nodeMap,
+                ArcIntMap& arcIdMap,
+                string sourcesFile,
+                string targetsFile,
+                string pre){
+    UnifyTerminals(g, wMap, nMap, nodeMap, arcIdMap, sourcesFile, targetsFile);
+    if (pre == PRE_YES){
+        RemoveIsolatedNodes(g, nodeMap[SOURCE], nodeMap[SINK]);
+        CollapseELementaryPaths(g, wMap, arcIdMap, nodeMap[SOURCE], nodeMap[SINK]);
+        RemoveSelfCycles(g);
+    }
+    //EXTRA STEP: make sure source and sink are not directly connected
+    ListDigraph::Node source = nodeMap[SOURCE];
+    ListDigraph::Node sink = nodeMap[SINK];
+    for (ListDigraph::OutArcIt arc(g, source); arc != INVALID; ++arc){
+        if (g.id(g.target(arc)) == g.id(sink)){ // direct source-sink connection - isolate with a middle node
+            ListDigraph::Node isolator = g.addNode();
+            nodeMap["ISOLATOR"] = isolator;
+            nMap[isolator] = "ISOLATOR";
+            ListDigraph::Arc head = g.addArc(isolator, sink);
+            wMap[head] = wMap[arc];
+            arcIdMap[head] = g.id(head);
+            ListDigraph::Arc tail = g.addArc(source, isolator);
+            arcIdMap[tail] = g.id(tail);
+            wMap[tail] = SURE;
+            g.erase(arc);
+            break;
+        }
+    }
+}
+
+/*Finds reachability probability given the vertex cuts
+    Starts from the source to the first cut
+    Then removes all the obsolete cuts and pick a next cut
+    An obsolete cut is a cut whose middle set intersects with
+    the left set of the current cut*/
+double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts){
+    //FOR DEBUGGING - REMOVE
+    //sort(cuts.begin(), cuts.end(), compareCuts);
+    // set up the source term and start the polynomial
+    Nodes_T zSource, wSource;
+    zSource.set(g.id(source));
+    vector<Term> sourceTerm;
+    sourceTerm.push_back(Term(zSource, wSource, 1.0));
+    Polynomial poly(sourceTerm);
+
+    Edges_T covered; // This will hold the set of covered edges so far
+    Edges_T sausage; // This will hold the current sausage: edges being considered for addition
+
+    // repeat until no cuts left
+    dprintf("starting loop\n");
+    while(cuts.size() > 0){
+        dprintf("beginning iteration\n");
+        //select a cut: here we just select the first one (arbitrary)
+        Cut nextCut = cuts.front();
+        //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
+        //cout << nextCut.size() << "  ";
+        cuts.erase(cuts.begin());
+        // Identify the sausage: The current set of edges in question
+        sausage = nextCut.getCoveredEdges() & ~covered;
+        //cout << ", Sausage size: " << sausage.count() << endl;
+        //cout << sausage.count() << "  ";
+        //Consume the current sausage
+        try{
+            ConsumeSausage(g, wMap, poly, sausage, nextCut.getMiddle());
+        }catch(exception& e){
+            cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+            exit(3);
+        }
+        //mark the sausage as covered
+        covered |= sausage;
+        //remove obsolete cuts
+        RemoveObsoleteCuts(cuts, nextCut);
+    }
+    dprintf("Loop finished\n");
+
+    // Last: add the edges between the last cut and the target node
+    Edges_T allEdges; // set of all edges in the network
+    EdgesAsBitset(g, allEdges);
+    sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
+    Nodes_T targetSet; // The last stop
+    targetSet.set(g.id(target));
+    //cout << "Last step, Sausage size: " << sausage.count() << endl;
+    //cout << "1  " << sausage.count() << "  ";
+    ConsumeSausage(g, wMap, poly, sausage, targetSet);
+
+    //RESULT
+    return poly.getResult();
+    //return -1.0;
+}
+
+/*prints cuts*/
+void PrintCuts(vector<Cut>& cuts, ListDigraph& g){
+    FOREACH_STL(cut, cuts){
+            PrintCut(cut, g);
+        }END_FOREACH;
 }

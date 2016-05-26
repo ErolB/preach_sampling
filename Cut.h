@@ -7,6 +7,8 @@
 #ifndef PREACH_SAMPLING_CUT_H
 #define PREACH_SAMPLING_CUT_H
 
+#include "Graph.h"
+
 // class definitions
 
 /*A class modeling a vertex cut*/
@@ -48,5 +50,14 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
 void FindAllCuts(Cut& currentCut, vector<Cut>& cuts,  ListDigraph& g, ListDigraph::Node target);
 
 void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes);
+
+void RemoveRedundantCuts(vector<Cut>& cuts);
+
+void Preprocess(ListDigraph& g, WeightMap& wMap, NodeNames& nMap, NameToNode& nodeMap, ArcIntMap& arcIdMap, string sourcesFile,
+                string targetsFile, string pre);
+
+double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts);
+
+void PrintCuts(vector<Cut>& cuts, ListDigraph& g);
 
 #endif //PREACH_SAMPLING_CUT_H

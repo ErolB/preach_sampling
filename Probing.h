@@ -5,6 +5,8 @@
 #ifndef PREACH_SAMPLING_PROBING_H
 #define PREACH_SAMPLING_PROBING_H
 
+#include "Sampling.h"
+
 // function signatures
 
 void ProbeRandom(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMap,

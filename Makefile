@@ -3,30 +3,38 @@ OBJ_FLAGS = --std=c++11 -c
 
 all: preach
 
-preach: preach.o cut.o graph.o sampling.o probing.o
-	g++ $(EXC_FLAGS) preach preach.o cut.o graph.o sampling.o probing.o
+util.o: util.cpp util.h
+	g++ $(OBJ_FLAGS) util.cpp
 
-classify: classify_nodes.o cut.o graph.o sampling.o probing.o
-	g++ $(EXC_FLAGS) classify classify_nodes.o cut.o graph.o sampling.o probing.o
+Graph.o: Graph.cpp Graph.h util.o
+	g++ $(OBJ_FLAGS) Graph.cpp
 
-preach.o: preach.cc preach.h
+Cut.o: Cut.cpp Cut.h Graph.o
+	g++ $(OBJ_FLAGS) Cut.cpp
+
+Sampling.o: Sampling.cpp Sampling.h Cut.o
+	g++ $(OBJ_FLAGS) Sampling.cpp
+
+Probing.o: Probing.cpp Probing.h Sampling.o
+	g++ $(OBJ_FLAGS) Probing.cpp
+
+preach.o: preach.cc preach.h Probing.o
 	g++ $(OBJ_FLAGS) preach.cc
+
+preach: preach.o
+	g++ $(EXC_FLAGS) preach preach.o Cut.o Graph.o Sampling.o Probing.o util.o
 
 classify_nodes.o: classify_nodes.cpp
 	g++ $(OBJ_FLAGS) classify_nodes.cpp
 
-cut.o: Cut.cc Cut.h
-	g++ $(OBJ_FLAGS) Cut.cc
-
-graph.o: Graph.cc Graph.h cut.o
-	g++ $(OBJ_FLAGS) Graph.cc
-
-sampling.o: Sampling.cc Sampling.h
-	g++ $(OBJ_FLAGS) Sampling.cc
-
-probing.o: Probing.cc Probing.h
-	g++ $(OBJ_FLAGS) Probing.cc
+classify: classify_nodes.o Cut.o Graph.o Sampling.o Probing.o util.o
+	g++ $(EXC_FLAGS) classify classify_nodes.o Cut.o Graph.o Sampling.o Probing.o util.o
 
 clean:
-	-rm preach
-	-rm classify
+	-rm -f preach
+	-rm -f util.o
+	-rm -f Graph.o
+	-rm -f Cut.o
+	-rm -f Sampling.o
+	-rm -f Probing.o
+	-rm -f classify

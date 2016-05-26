@@ -5,7 +5,11 @@
 #ifndef PREACH_SAMPLING_SAMPLING_H
 #define PREACH_SAMPLING_SAMPLING_H
 
+#include "Cut.h"
+
 // function signatures
+
+double SuccessProb(vector<int> subset, ListDigraph& gOrig, WeightMap& wMapOrig);
 
 void SampleRandom(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target,
                   double samplingProb, Edges_T& sampleEdges, ArcIntMap& arcIdMap);

@@ -3,7 +3,14 @@
 //
 
 #include "Sampling.h"
-#include "preach.h"
+
+double SuccessProb(vector<int> subset, ListDigraph& gOrig, WeightMap& wMapOrig){
+    double result = 1.0;
+    FOREACH_STL(arcId, subset){
+            result *= (1.0 - wMapOrig[gOrig.arcFromId(arcId)]);
+        }END_FOREACH;
+    return result + 0.001;
+}
 
 /* This function samples the graph. The edges to sample are randomly selected.
 ** For every edge (excpet from SOURCE or to TARGET), it tosses a coin with success prob = samplingProb
