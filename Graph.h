@@ -2,7 +2,7 @@
 // Created by erol on 5/9/16.
 //
 
-#include "preach.h"
+#include "util.h"
 
 #ifndef PREACH_SAMPLING_GRAPH_H
 #define PREACH_SAMPLING_GRAPH_H

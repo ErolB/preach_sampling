@@ -27,8 +27,8 @@ preach: preach.o
 classify_nodes.o: classify_nodes.cpp
 	g++ $(OBJ_FLAGS) classify_nodes.cpp
 
-classify: classify_nodes.o Cut.o Graph.o Sampling.o Probing.o util.o
-	g++ $(EXC_FLAGS) classify classify_nodes.o Cut.o Graph.o Sampling.o Probing.o util.o
+classify: classify_nodes.o Cut.o Graph.o preach.o util.o
+	g++ $(EXC_FLAGS) classify classify_nodes.o Cut.o Graph.o util.o
 
 clean:
 	-rm -f preach
