@@ -60,4 +60,8 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
 
 void PrintCuts(vector<Cut>& cuts, ListDigraph& g);
 
+void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cut end_cut, ListDigraph& g);
+
+vector<int> cvtBitset(Nodes_T input);
+
 #endif //PREACH_SAMPLING_CUT_H

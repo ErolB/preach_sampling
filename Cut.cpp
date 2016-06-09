@@ -514,3 +514,24 @@ void PrintCuts(vector<Cut>& cuts, ListDigraph& g){
             PrintCut(cut, g);
         }END_FOREACH;
 }
+
+void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cut end_cut, ListDigraph& g){
+    for (ListDigraph::OutArcIt edge(g,start_node); edge != INVALID; ++edge){
+        int target_id = g.id(g.target(edge));
+        if (!end_cut.getMiddle()[target_id]) {  // if the edge is not on the target cut
+            edges_covered.push_back(g.id(edge));
+            HorizontalPaths(edges_covered, start_node, end_cut, g);
+        }
+    }
+}
+
+// returns a vector of the indicies of all ones
+vector<int> cvtBitset(Nodes_T input){
+    vector<int> positions;
+    for (int i = 0; i < input.size(); i++){
+        if (input[i]){
+            positions.push_back(i+1);
+        }
+    }
+    return positions;
+}

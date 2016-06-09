@@ -15,8 +15,6 @@
  */
 #include "Probing.h"
 
-
-
 string edgesToReferenceString(ListDigraph& g, WeightMap& wMap, NodeNames& nNames){
     vector<string> edges;
     for (ListDigraph::ArcIt arc(g); arc != INVALID; ++arc){

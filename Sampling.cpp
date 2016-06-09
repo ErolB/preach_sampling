@@ -187,6 +187,8 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
     vector<Cut> cuts;
     vector< pair< vector<int>, int > > edgeSubsets;
     FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
+    vector<int> edges;
+    HorizontalPaths(edges, sourceOrig, cuts[1], gOrig)
 
     dprintf("Solve graph\n");
     double prob = Solve(g, wMap, source, target, cuts);

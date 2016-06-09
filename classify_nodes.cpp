@@ -12,17 +12,6 @@ bool print_cuts = false;
 
 string output_path = "/home/erol/Documents/preach_sampling/data.txt";  // path of output file
 
-// returns a vector of the indicies of all ones
-vector<int> cvtBitset(Nodes_T input){
-    vector<int> positions;
-    for (int i = 0; i < input.size(); i++){
-        if (input[i]){
-            positions.push_back(i+1);
-        }
-    }
-    return positions;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////// main function
 
 int main(int argc, char** argv) {
