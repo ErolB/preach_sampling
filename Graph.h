@@ -45,6 +45,8 @@ public:
 
     string toString();
 
+    Nodes_T getZ();
+
     /*Multiply by a new edge term*/
     void multiply(int subscript, double p, bool inverse);
 
@@ -60,10 +62,11 @@ public:
 };
 
 class Polynomial{
-    vector<Term> terms; // regular terms with start nodes and middle edges
     map<string, Term> endTerms; // black holes with end nodes, the key is z nodes as ulong
 
 public:
+    vector<Term> terms; // regular terms with start nodes and middle edges
+
     Polynomial(vector<Term>& _terms): terms(_terms){}
 
     /*Adds and edge: mutiplies the whole polynomial by

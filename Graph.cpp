@@ -34,6 +34,10 @@ void Term::addToCoeff(double increment){coeff += increment;}
 
 bool Term::hasZ(){return z.any();}
 
+Nodes_T Term::getZ(){
+    return z;
+}
+
 bool Term::collapse(Edges_T& midEdges, map< int, vector<int> >& edgeTerminals, Nodes_T& endNodes, Nodes_T& newZ){
     int edges[MAX_EDGES][2];
     int count;
@@ -146,6 +150,8 @@ double Polynomial::getResult(){
     edgeTerminals is a hash from edge id to its source and target ids
     endNodes are the nodes in the next cut*/
 void Polynomial::collapse(Edges_T& midEdges, map< int, vector<int> >& edgeTerminals, Nodes_T& endNodes){
+    cout << this->terms.size() << "terms" << endl;
+
     vector<Term> newTerms;
     FOREACH_STL(term, terms){
             // check collapsing of term
@@ -439,9 +445,3 @@ void RemoveSelfCycles(ListDigraph& g){
         }
     }
 }
-
-
-
-
-
-

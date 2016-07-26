@@ -64,4 +64,14 @@ void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cu
 
 vector<int> cvtBitset(Nodes_T input);
 
+void FindPathsTesting(ListDigraph& g, Cut startCut, Cut endCut, vector< vector<int> > paths);
+
+vector< vector<int> > PathsFromPointTesting(ListDigraph& g, ListDigraph::Node startNode, vector<int> endCut, vector<int> base);
+
+vector< vector<int> > PathsFromCutTesting(ListDigraph& g, vector<int> startCut, vector<int> endCut);
+
+void optimizedConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes, vector< vector<int> > paths);
+
+double optimizedSolve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts);
+
 #endif //PREACH_SAMPLING_CUT_H

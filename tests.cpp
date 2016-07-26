@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include "/home/erol/Documents/googletest/include/gtest/gtest.h"
 #include "Probing.h"  // includes all other PReach files
 
 bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
@@ -15,6 +15,7 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
                 // check if node is on the right
                 for (int test_node: right) {
                     if (target_id == test_node) {
+                        cout << "1" << endl;
                         return false;  // an edge crossed the cut, so it is invalid (no more computation needed)
                     }
                 }
@@ -25,6 +26,7 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
                 // check if node is on the right
                 for (int test_node: right) {
                     if (origin_id == test_node){
+                        cout << origin_id << " " << node_id << endl;
                         return false;  // no more computation needed
                     }
                 }
@@ -37,6 +39,7 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
                 // check if node is on the right
                 for (int test_node: right){
                     if (origin_id == test_node){
+                        cout << "3" << endl;
                         return false;
                     }
                 }
@@ -46,6 +49,7 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
     // if the function reaches this point, then the test has been passed
     return true;
 }
+
 
 TEST(CutValididtyTest, standard){
     char graph_file[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.txt";
@@ -77,4 +81,5 @@ TEST(CutValididtyTest, standard){
 int main(int argc, char** argv){
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
+
 }

@@ -288,6 +288,8 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
 
     FillEdgeSubsets(g, cuts, edgeSubsets);
     RefineCuts(cuts, g, target, edgeSubsets);
+
+    cout << "original cuts: " << cuts.size() << endl;
 }
 
 /*Starting from a vertex cut, recursively finds all other cuts to the right*/
@@ -357,10 +359,11 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
             edgeIdList.push_back(edgeId);  // edgeId indexing is zero-based
         }
     }
-/*
+
     //randomly rearrange edge IDs
     vector<int> temp;
     int size = edgeIdList.size();
+    srand((int)getCPUTime());
     while(temp.size() != size){
         int random = (int) rand() / 1000;
         int index = (random % edgeIdList.size());
@@ -368,7 +371,6 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
         edgeIdList.erase(edgeIdList.begin() + index);
     }
     edgeIdList = temp;
-*/
 
     //start adding the edges in the current sausage
     //here we collapse after each addition (arbitrary)
@@ -516,6 +518,7 @@ void PrintCuts(vector<Cut>& cuts, ListDigraph& g){
 }
 
 void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cut end_cut, ListDigraph& g){
+    cout << "finding horizontal cuts " << endl;
     for (ListDigraph::OutArcIt edge(g,start_node); edge != INVALID; ++edge){
         int target_id = g.id(g.target(edge));
         if (!end_cut.getMiddle()[target_id]) {  // if the edge is not on the target cut
@@ -530,8 +533,265 @@ vector<int> cvtBitset(Nodes_T input){
     vector<int> positions;
     for (int i = 0; i < input.size(); i++){
         if (input[i]){
-            positions.push_back(i+1);
+            positions.push_back(i);
         }
     }
     return positions;
+}
+
+vector< vector<int> > PathsFromPointTesting(ListDigraph& g, int startNode, vector<int> startCut, vector<int> endCut, vector<int> base){
+    vector< vector<int> > paths;
+    for(ListDigraph::OutArcIt o(g, g.nodeFromId(startNode)); o != INVALID; ++o) {
+        int current_id = g.id(g.target(o));
+        // skip if node is on start cut
+        bool on_start = false;
+        for (int nodeId: startCut){
+            if (current_id == nodeId){ on_start = true; }
+        }
+        if (on_start){ continue; }
+        // check if node is already on the path
+        bool on_path = false;
+        for (int nodeId: base){
+            if (current_id == nodeId) { on_path = true; }
+        }
+        if (on_path){ continue; }
+        // add current node
+        vector<int> new_path = base;
+        new_path.push_back(current_id);
+        // check if current node completes path
+        bool completed = false;
+        for (int nodeId: endCut){
+            if (nodeId == current_id) {
+                completed = true;
+                paths.push_back(new_path);
+                break;
+            }
+        }
+        // add path
+        if (!completed){
+            vector< vector<int> > new_paths = PathsFromPointTesting(g, current_id, startCut, endCut, new_path);
+            for(vector<int> path: new_paths){
+                paths.push_back(path);
+            }
+        }
+    }
+    return paths;
+}
+
+vector< vector<int> > PathsFromCutTesting(ListDigraph& g, vector<int> startCut, vector<int> endCut){
+    vector< vector<int> > all_paths;
+    for (int startNode: startCut){
+        vector<int> base;
+        base.push_back(startNode);
+        vector< vector<int> > new_paths = PathsFromPointTesting(g, startNode, startCut, endCut, base);
+        for (vector<int> path: new_paths){
+            all_paths.push_back(path);
+        }
+    }
+    return all_paths;
+}
+
+void optimizedConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes, vector< vector<int> > paths){
+    // Build a dictionary of edgeId -> source and target node ids
+    // Will need it with each collapsation operation within this sausage
+    map< int, vector<int> > edgeTerminals;
+    map< pair< int, int >, int > reverseTerminalMap;
+
+    FOREACH_BS(edgeId, sausage){
+        vector<int> terminals;
+        ListDigraph::Arc arc = g.arcFromId(edgeId);
+        terminals.push_back(g.id(g.source(arc)));
+        terminals.push_back(g.id(g.target(arc)));
+        edgeTerminals[edgeId] = terminals;
+        reverseTerminalMap[make_pair(g.id(g.source(arc)), g.id(g.target(arc)))] = edgeId;
+    }
+    // build vectors from sausage
+    vector<int> edgeIdList;
+    for (int edgeId = 0; edgeId < sausage.size(); edgeId++) {
+        if (sausage[edgeId]) {
+            edgeIdList.push_back(edgeId);  // edgeId indexing is zero-based
+        }
+    }
+    // construct map structures representing paths
+    vector< map< int, bool > > path_maps;
+    for (vector<int> path: paths){
+        map< int, bool > current_map;
+        for (int edgeId: edgeIdList){
+            current_map[edgeId] = false;
+        }
+        for (int i = 1; i < path.size(); i++){
+            int current_id = reverseTerminalMap[make_pair(path[i-1], path[i])];
+            current_map[current_id] = true;
+        }
+        path_maps.push_back(current_map);
+    }
+    // create data structure to store scoring information for each edge
+    // each edge is assigned a map which represents each path it is in, and separates the paths by how close they are
+    //     to being completed
+    map< int, map< int, int > > edgeScores;
+    for (int edgeId: edgeIdList) {
+        map< int, int > scoreMap;
+        // for each path
+        for (map < int, bool > path_map: path_maps){
+            // if current edge on current path
+            if (path_map[edgeId]){
+                // count number of edges left until path is completed
+                int counter = 0;
+                for (int current_edge: edgeIdList){
+                    if (path_map[current_edge]){ counter++; }
+                }
+                // if the score map contains an entry for that distance from completion
+                if (scoreMap.count(counter)) { scoreMap[counter]++; }
+                else { scoreMap[counter] = 1; }
+                //cout << "edge: " << edgeId << ", score: " << counter << endl;
+            }
+        }
+        edgeScores[edgeId] = scoreMap;
+    }
+    /*
+    //randomly rearrange edge IDs
+    vector<int> temp;
+    int size = edgeIdList.size();
+    srand((int)getCPUTime());  // seed random generator
+    while(temp.size() != size){
+        int random = (int) rand() / 1000;
+        int index = (random % edgeIdList.size());
+        temp.push_back(edgeIdList[index]);
+        edgeIdList.erase(edgeIdList.begin() + index);
+    }
+    edgeIdList = temp;
+
+    // order edges based on scores
+    */
+    int stop_count = 10;
+    vector<int> tempEdgeList = edgeIdList;
+    edgeIdList.clear();
+    while (!tempEdgeList.empty()){
+        // find ideal edge ("greedy" approach)
+        vector<int> bestEdges;
+        for (int i = 1; i < stop_count; i++) { // "i" is how close a path is to completion
+            int maxScore = 0;
+            for (int edgeId: tempEdgeList) {
+                map<int, int> scoreMap = edgeScores[edgeId];
+                if (!scoreMap.count(i)){ break; } // break out of loop if score is not available
+                if (scoreMap[i] > maxScore){ maxScore = scoreMap[i]; }
+            }
+            // now that the maximum score is known, find the ideal edges
+            bestEdges.clear();  // start over
+            for (int edgeId: tempEdgeList) {
+                if (edgeScores[edgeId][i] == maxScore){ bestEdges.push_back(edgeId); }
+            }
+        }
+        int bestEdge = bestEdges[0];  // pick an ideal edge (arbitrary)
+        // add edge to list and remove from temporary list
+        edgeIdList.push_back(bestEdge);
+        for (int i = 0; i < tempEdgeList.size(); i++){
+            if (tempEdgeList[i] == bestEdge){
+                tempEdgeList.erase(tempEdgeList.begin()+i);
+                break;
+            }
+        }
+        // update path map
+        for (map< int, bool > path: path_maps){
+            path[bestEdge] = false;
+        }
+        // update score map (make a separate function)
+        for (int edgeId: edgeIdList) {
+            map< int, int > scoreMap;
+            // for each path
+            for (map < int, bool > path_map: path_maps){
+                // if current edge on current path
+                if (path_map[edgeId]){
+                    // count number of edges left until path is completed
+                    int counter = 0;
+                    for (int current_edge: edgeIdList){
+                        if (path_map[current_edge]){ counter++; }
+                    }
+                    // if the score map contains an entry for that distance from completion
+                    if (scoreMap.count(counter)) { scoreMap[counter]++; }
+                    else { scoreMap[counter] = 1; }
+                    //cout << "edge: " << edgeId << ", score: " << counter << endl;
+                }
+            }
+            edgeScores[edgeId] = scoreMap;
+        }
+    }
+
+    //start adding the edges in the current sausage
+    //here we collapse after each addition (arbitrary)
+    double start = getCPUTime();
+    for (int edgeId: edgeIdList) {
+        cout << edgeId << " ";
+        if (sausage[edgeId]) {
+            //cout << "Adding edge " << edgeCounter;
+            poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
+            //cout << ", Collapsing!" << endl;
+            poly.collapse(sausage, edgeTerminals, endNodes);
+        }
+    }
+    cout << (getCPUTime() - start) << " milliseconds" << endl;
+
+    //Advance the polynomial: make it ready for next sausage
+    poly.advance();
+}
+
+double optimizedSolve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts){
+    //FOR DEBUGGING - REMOVE
+    //sort(cuts.begin(), cuts.end(), compareCuts);
+    // set up the source term and start the polynomial
+    Nodes_T zSource, wSource;
+    zSource.set(g.id(source));
+    vector<Term> sourceTerm;
+    sourceTerm.push_back(Term(zSource, wSource, 1.0));
+    Polynomial poly(sourceTerm);
+
+    Edges_T covered; // This will hold the set of covered edges so far
+    Edges_T sausage; // This will hold the current sausage: edges being considered for addition
+
+    // repeat until no cuts left
+    dprintf("starting loop\n");
+    cout << endl;
+    while(cuts.size() > 0){
+        dprintf("beginning iteration\n");
+        //select a cut: here we just select the first one (arbitrary)
+        Cut nextCut = cuts.front();
+        //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
+        //cout << nextCut.size() << "  ";
+        cuts.erase(cuts.begin());
+        // Identify the sausage: The current set of edges in question
+        sausage = nextCut.getCoveredEdges() & ~covered;
+        //cout << ", Sausage size: " << sausage.count() << endl;
+        //cout << sausage.count() << "  ";
+        //Consume the current sausage
+        try{
+            vector<int> base = {g.id(source)};
+            vector<int> start_cut = base;
+            vector< vector<int> > paths = PathsFromPointTesting(g, g.id(source), start_cut, cvtBitset(nextCut.getMiddle()), base);
+            optimizedConsumeSausage(g, wMap, poly, sausage, nextCut.getMiddle(), paths);
+        }catch(exception& e){
+            cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+            exit(3);
+        }
+        //mark the sausage as covered
+        covered |= sausage;
+        //remove obsolete cuts
+        RemoveObsoleteCuts(cuts, nextCut);
+    }
+    dprintf("Loop finished\n");
+
+    // Last: add the edges between the last cut and the target node
+    Edges_T allEdges; // set of all edges in the network
+    EdgesAsBitset(g, allEdges);
+    sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
+    Nodes_T targetSet; // The last stop
+    targetSet.set(g.id(target));
+    //cout << "Last step, Sausage size: " << sausage.count() << endl;
+    //cout << "1  " << sausage.count() << "  ";
+    double start = getCPUTime();
+    ConsumeSausage(g, wMap, poly, sausage, targetSet);
+    cout << (getCPUTime() - start) << " milliseconds" << endl;
+
+    //RESULT
+    return poly.getResult();
+    //return -1.0;
 }

@@ -183,14 +183,42 @@ double iteration(ListDigraph& gOrig, WeightMap& wMapOrig, ArcIntMap& arcIdMapOri
         return 0.0;
     }
 
-    dprintf("Find good cuts\n");
+    cout << "finding cuts" << endl;
     vector<Cut> cuts;
     vector< pair< vector<int>, int > > edgeSubsets;
     FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
-    vector<int> edges;
-    HorizontalPaths(edges, sourceOrig, cuts[1], gOrig)
+    vector<int> base;
+    /*
+    for (int i = 0; i < cuts.size(); i++){
 
+        if (i < (cuts.size() - 1)) {
+            vector< vector<int> > paths = PathsFromCutTesting(g, cvtBitset(cuts[i].getMiddle()), cvtBitset(cuts[i+1].getMiddle()));
+            cout << "paths: " << endl;
+            for (vector<int> path: paths){
+                for (int node: path){
+                    cout << node << ", ";
+                }
+                cout << endl;
+            }
+        }
+
+        vector<int> nodes = cvtBitset(cuts[i].getMiddle());
+        cout << "cut: ";
+        for (int node: nodes){
+            cout << node << " ";
+        }
+        cout << endl;
+    }
+     */
+    Cut cut1 = cuts[1];
+    cout << "starting" << endl;
+    Nodes_T end = cut1.getMiddle();
+    cout << "converting to vector" << endl;
+    vector<int> endCut = cvtBitset(end);
+    cout << "entering function" << endl;
+    //vector< vector<int> > paths = PathsFromPointTesting(g, source, endCut, base);
+    //cout << paths.size() << " paths" << endl;
     dprintf("Solve graph\n");
-    double prob = Solve(g, wMap, source, target, cuts);
+    double prob = optimizedSolve(g, wMap, source, target, cuts);
     return prob;
 }
