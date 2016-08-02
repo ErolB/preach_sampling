@@ -74,4 +74,8 @@ void optimizedConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, 
 
 double optimizedSolve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts);
 
+void randomizedConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes, vector< vector<int> > paths);
+
+double randomizedSolve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts);
+
 #endif //PREACH_SAMPLING_CUT_H
