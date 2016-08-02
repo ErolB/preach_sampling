@@ -1,46 +1,50 @@
-GTEST_DIR = /home/erol/Documents/googletest
+GTEST_DIR = /usr/include/gtest
+GTEST_SRC_DIR = /usr/src/gtest
+CC = clang++
 
-EXC_FLAGS = -std=c++11 -o
-OBJ_FLAGS = -std=c++11 -c
+EXC_FLAGS = --std=c++11 -o
+OBJ_FLAGS = --std=c++11 -c
 
-GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h $(GTEST_DIR)/include/gtest/internal/*.h
+GTEST_HEADERS = $(GTEST_DIR)/*.h $(GTEST_DIR)/internal/*.h
 
-GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+GTEST_SRCS_ = $(GTEST_SRC_DIR)/src/*.cc $(GTEST_SRC_DIR)/src/*.h $(GTEST_HEADERS)
+
+CPPFLAGS += -isystem $(GTEST_DIR)
 
 all: preach
 
 util.o: util.cpp util.h
-	g++ $(OBJ_FLAGS) util.cpp
+	$(CC) $(OBJ_FLAGS) util.cpp
 
 Graph.o: Graph.cpp Graph.h util.o
-	g++ $(OBJ_FLAGS) Graph.cpp
+	$(CC) $(OBJ_FLAGS) Graph.cpp
 
 Cut.o: Cut.cpp Cut.h Graph.o
-	g++ $(OBJ_FLAGS) Cut.cpp
+	$(CC) $(OBJ_FLAGS) Cut.cpp
 
 Sampling.o: Sampling.cpp Sampling.h Cut.o
-	g++ $(OBJ_FLAGS) Sampling.cpp
+	$(CC) $(OBJ_FLAGS) Sampling.cpp
 
 Probing.o: Probing.cpp Probing.h Sampling.o
-	g++ $(OBJ_FLAGS) Probing.cpp
+	$(CC) $(OBJ_FLAGS) Probing.cpp
 
 preach.o: preach.cc preach.h Probing.o
-	g++ $(OBJ_FLAGS) preach.cc
+	$(CC) $(OBJ_FLAGS) preach.cc
 
 preach: preach.o
-	g++ -g $(EXC_FLAGS) preach preach.o Cut.o Graph.o Sampling.o Probing.o util.o
+	$(CC) $(EXC_FLAGS) preach preach.o Cut.o Graph.o Sampling.o Probing.o util.o
 
 classify_nodes.o: classify_nodes.cpp
-	g++ $(OBJ_FLAGS) classify_nodes.cpp
+	$(CC) $(OBJ_FLAGS) classify_nodes.cpp
 
 classify: classify_nodes.o Cut.o Graph.o preach.o util.o
-	g++ $(EXC_FLAGS) classify classify_nodes.o Cut.o Graph.o util.o
+	$(CC) $(EXC_FLAGS) classify classify_nodes.o Cut.o Graph.o util.o
 
-manual_tests.o: manual_tests.cpp
-	g++ $(OBJ_FLAGS) manual_tests.cpp
+tests.o: tests.cpp
+	$(CC) $(OBJ_FLAGS)  tests.cpp
 
-tests: manual_tests.o Probing.o Sampling.o Graph.o Cut.o util.o libgtest.a
-	g++ -g -o tests $^ -lpthread
+tests: tests.o Probing.o Sampling.o Graph.o Cut.o util.o libgtest.a
+	$(CC) --std=c++11 -o tests $^ -lpthread
 
 clean:
 	-rm -f preach
@@ -50,7 +54,3 @@ clean:
 	-rm -f Sampling.o
 	-rm -f Probing.o
 	-rm -f classify
-	-rm -f tests.o
-	-rm -f gtest-all.o
-	-rm -f manual_tests.o
-	-rm -f tests
