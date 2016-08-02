@@ -1,9 +1,7 @@
-<<<<<<< HEAD
 #include <gtest/gtest.h>
 #include <fstream>
 =======
 #include "/home/erol/Documents/googletest/include/gtest/gtest.h"
->>>>>>> 1b214c50b126cf3272ce1ef8589f958efaa945d9
 #include "Probing.h"  // includes all other PReach files
 
 // verify that graph was properly created
@@ -83,13 +81,10 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
                 // check if node is on the right
                 for (int test_node: right) {
                     if (target_id == test_node) {
-<<<<<<< HEAD
 		      //cout << "left to right" << endl;
 		      return false;  // an edge crossed the cut, so it is invalid (no more computation needed)
-=======
                         cout << "1" << endl;
                         return false;  // an edge crossed the cut, so it is invalid (no more computation needed)
->>>>>>> 1b214c50b126cf3272ce1ef8589f958efaa945d9
                     }
                 }
             }
@@ -99,14 +94,12 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
                 // check if node is on the right
                 for (int test_node: right) {
                     if (origin_id == test_node){
-<<<<<<< HEAD
 		      //cout << "right to left" << endl;
 		      //cout << origin_id << "-->" << node_id << endl;  // for debugging
 		      return false;  // no more computation needed
-=======
+
                         cout << origin_id << " " << node_id << endl;
                         return false;  // no more computation needed
->>>>>>> 1b214c50b126cf3272ce1ef8589f958efaa945d9
                     }
                 }
             }
@@ -130,14 +123,10 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
     return true;
 }
 
-<<<<<<< HEAD
-=======
-
 TEST(CutValididtyTest, standard){
     char graph_file[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.txt";
     char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.sources";
     char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.targets";
->>>>>>> 1b214c50b126cf3272ce1ef8589f958efaa945d9
 
 bool testCuts(char graphFile[], char sourcesFile[], char targetsFile[]){
     ListDigraph gOrig;
@@ -337,8 +326,3 @@ TEST(IterationTest, test){
 int main(int argc, char** argv){
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
-<<<<<<< HEAD
-=======
-
->>>>>>> 1b214c50b126cf3272ce1ef8589f958efaa945d9
-}
