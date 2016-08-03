@@ -1,7 +1,6 @@
-#include <gtest/gtest.h>
+//#include <gtest/gtest.h>
 #include <fstream>
-=======
-#include "/home/erol/Documents/googletest/include/gtest/gtest.h"
+#include "/usr/include/gtest/gtest.h"
 #include "Probing.h"  // includes all other PReach files
 
 // verify that graph was properly created
@@ -123,10 +122,7 @@ bool verifyCuts(vector<Cut> cuts, ListDigraph& g){
     return true;
 }
 
-TEST(CutValididtyTest, standard){
-    char graph_file[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.txt";
-    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.sources";
-    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.targets";
+
 
 bool testCuts(char graphFile[], char sourcesFile[], char targetsFile[]){
     ListDigraph gOrig;
@@ -326,3 +322,4 @@ TEST(IterationTest, test){
 int main(int argc, char** argv){
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
+}
