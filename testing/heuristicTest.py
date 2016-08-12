@@ -3,14 +3,14 @@ import subprocess
 import os
 import time
 import numpy as np
+import json
 
 coreCount = multiprocessing.cpu_count()
-testCycles = 10
-testDataLocation = 'data/synthetic/'
 startPath = '/home/erol/Documents/preach_sampling/'
-random = 'testing/preachRandom'
-optimized = 'testing/preachOptimized'
+random = startPath + 'testing/preachRandom'
+optimized = startPath + 'testing/preachOptimized'
 outputFile = 'heuristicResults.txt'
+configFile = '/home/erol/Documents/preach_sampling/testing/configuration.json'
 
 # this function finds sets of target, source, and graph files
 def loadData():
@@ -28,26 +28,25 @@ def loadData():
 def runTests(execFile, data, lock):
     file = open(outputFile, 'a')
     graphFile = startPath + testDataLocation + data[0]
-    if graphFile != startPath + testDataLocation + 'BA_2_5_4.txt':
+    if (graphFile != startPath + testDataLocation + 'BA_2_5_4.txt') and (graphFile != startPath + testDataLocation + 'BA_2_20_2.txt'):
         return
     print('start')
     sourceFile = startPath + testDataLocation + data[1]
     targetFile = startPath + testDataLocation + data[2]
     # run program
-    print(graphFile)
     p = subprocess.Popen([execFile, graphFile, sourceFile, targetFile, '0', str(testCycles), 'rand', '2', '10'], stdout=subprocess.PIPE)
     buffer = ''
     while True:
-        #print(buffer)
-        if p.stdout:
-            output = str(p.communicate()[0].strip())
+        time.sleep(0.5)
+        output = str(p.communicate()[0]).strip()
+        if output:
             print(output)
-            if output:
-                buffer += output
-                if '@@@' in buffer:
-                    break
+            buffer = output
+            if '@@@' in buffer:
+                break
     timeList = parse(buffer)
     print(timeList)
+    # write to output file
     lock.acquire()
     try:
         file.write(str(data[0]) + ',' + execFile + ',' + str(np.mean(timeList)) + ',' + str(np.std(timeList)) + '\n')
@@ -89,9 +88,15 @@ def distributeTasks(tasks):
 # defines the procedure for a specific task
 def task(dataList, lock):
     for item in dataList:
-        runTests('testing/preachRandom', item, lock)
-        runTests('testing/preachOptimized', item, lock)
+        runTests(random, item, lock)
+        runTests(optimized, item, lock)
 
 if __name__ == '__main__':
+    # read configuatiaon file
+    config = open(configFile, 'r')
+    configData = json.loads(config.read())
+    testCycles = configData['testCycles']
+    testDataLocation = configData['dataPath']
+    # run tests
     data = loadData()
     distributeTasks(data)
