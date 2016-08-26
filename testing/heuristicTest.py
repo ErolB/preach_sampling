@@ -27,22 +27,27 @@ def loadData():
 # this function tests a series of data sets with a given algorithm
 def runTests(execFile, data, lock):
     file = open(outputFile, 'a')
-    graphFile = startPath + testDataLocation + data[0]
-    if (graphFile != startPath + testDataLocation + 'BA_2_5_4.txt') and (graphFile != startPath + testDataLocation + 'BA_2_20_2.txt'):
+    graphFile = testDataLocation + data[0]
+    if (graphFile != testDataLocation + 'BA_2_10_4.txt'): #and (graphFile != testDataLocation + 'BA_2_20_2.txt'):
         return
+    temp = open((graphFile[:-4] + "_pipe.txt"), "w")
     print('start')
-    sourceFile = startPath + testDataLocation + data[1]
-    targetFile = startPath + testDataLocation + data[2]
+    sourceFile = testDataLocation + data[1]
+    targetFile = testDataLocation + data[2]
+    print(graphFile)
     # run program
-    p = subprocess.Popen([execFile, graphFile, sourceFile, targetFile, '0', str(testCycles), 'rand', '2', '10'], stdout=subprocess.PIPE)
+    p = subprocess.Popen([execFile, graphFile, sourceFile, targetFile, '0', str(testCycles), 'rand', '2', '10'], stdout=temp)
+    temp.close()
+    temp = open((graphFile[:-4] + "_pipe.txt"), "r")
     buffer = ''
     while True:
         time.sleep(0.5)
-        output = str(p.communicate()[0]).strip()
+        output = str(temp.read()).strip()
         if output:
             print(output)
-            buffer = output
+            buffer += output
             if '@@@' in buffer:
+                print('done')
                 break
     timeList = parse(buffer)
     print(timeList)
@@ -88,15 +93,15 @@ def distributeTasks(tasks):
 # defines the procedure for a specific task
 def task(dataList, lock):
     for item in dataList:
-        runTests(random, item, lock)
         runTests(optimized, item, lock)
+        runTests(random, item, lock)
 
 if __name__ == '__main__':
     # read configuatiaon file
     config = open(configFile, 'r')
     configData = json.loads(config.read())
     testCycles = configData['testCycles']
-    testDataLocation = configData['dataPath']
+    testDataLocation = startPath + configData['dataPath']
     # run tests
     data = loadData()
     distributeTasks(data)

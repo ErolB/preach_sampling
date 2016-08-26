@@ -49,7 +49,7 @@ void FindSomeGoodCuts(ListDigraph& g, ListDigraph::Node source, ListDigraph::Nod
 
 void FindAllCuts(Cut& currentCut, vector<Cut>& cuts,  ListDigraph& g, ListDigraph::Node target);
 
-void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes);
+void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes, vector< vector<int> > paths);
 
 void RemoveRedundantCuts(vector<Cut>& cuts);
 
@@ -63,6 +63,8 @@ void PrintCuts(vector<Cut>& cuts, ListDigraph& g);
 void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cut end_cut, ListDigraph& g);
 
 vector<int> cvtBitset(Nodes_T input);
+
+vector<int> cvtEdgeBitset(Edges_T input);
 
 void FindPathsTesting(ListDigraph& g, Cut startCut, Cut endCut, vector< vector<int> > paths);
 

@@ -539,6 +539,17 @@ vector<int> cvtBitset(Nodes_T input){
     return positions;
 }
 
+// version for edge bitset
+vector<int> cvtEdgeBitset(Edges_T input){
+    vector<int> positions;
+    for (int i = 0; i < input.size(); i++){
+        if (input[i]){
+            positions.push_back(i);
+        }
+    }
+    return positions;
+}
+
 vector< vector<int> > PathsFromPointTesting(ListDigraph& g, int startNode, vector<int> startCut, vector<int> endCut, vector<int> base){
     vector< vector<int> > paths;
     for(ListDigraph::OutArcIt o(g, g.nodeFromId(startNode)); o != INVALID; ++o) {

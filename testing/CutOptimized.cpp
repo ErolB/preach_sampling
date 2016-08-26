@@ -340,54 +340,6 @@ void FindAllCuts(Cut& currentCut, vector<Cut>& cuts,  ListDigraph& g, ListDigrap
     }
 }
 
-void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes){
-    // Build a dictionary of edgeId -> source and target node ids
-    // Will need it with each collapsation operation within this sausage
-    map< int, vector<int> > edgeTerminals;
-
-    FOREACH_BS(edgeId, sausage){
-        vector<int> terminals;
-        ListDigraph::Arc arc = g.arcFromId(edgeId);
-        terminals.push_back(g.id(g.source(arc)));
-        terminals.push_back(g.id(g.target(arc)));
-        edgeTerminals[edgeId] = terminals;
-    }
-
-    vector<int> edgeIdList;
-    for (int edgeId = 0; edgeId < sausage.size(); edgeId++) {
-        if (sausage[edgeId]) {
-            edgeIdList.push_back(edgeId);  // edgeId indexing is zero-based
-        }
-    }
-
-    //randomly rearrange edge IDs
-    vector<int> temp;
-    int size = edgeIdList.size();
-    srand((int)getCPUTime());
-    while(temp.size() != size){
-        int random = (int) rand() / 1000;
-        int index = (random % edgeIdList.size());
-        temp.push_back(edgeIdList[index]);
-        edgeIdList.erase(edgeIdList.begin() + index);
-    }
-    edgeIdList = temp;
-
-    //start adding the edges in the current sausage
-    //here we collapse after each addition (arbitrary)
-    int edgeCounter = 0;
-    for (int edgeId: edgeIdList) {
-        if (sausage[edgeId]) {
-            //cout << "Adding edge " << edgeCounter;
-            poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
-            //cout << ", Collapsing!" << endl;
-            poly.collapse(sausage, edgeTerminals, endNodes);
-        }
-    }
-
-    //Advance the polynomial: make it ready for next sausage
-    poly.advance();
-}
-
 /*removes cuts that are masked by smaller cuts*/
 void RemoveRedundantCuts(vector<Cut>& cuts){
     for (size_t i=0; i<cuts.size(); i++){
@@ -470,6 +422,17 @@ void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cu
 
 // returns a vector of the indicies of all ones
 vector<int> cvtBitset(Nodes_T input){
+    vector<int> positions;
+    for (int i = 0; i < input.size(); i++){
+        if (input[i]){
+            positions.push_back(i);
+        }
+    }
+    return positions;
+}
+
+// version for edge bitset
+vector<int> cvtEdgeBitset(Edges_T input){
     vector<int> positions;
     for (int i = 0; i < input.size(); i++){
         if (input[i]){
@@ -684,6 +647,7 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     vector<Term> sourceTerm;
     sourceTerm.push_back(Term(zSource, wSource, 1.0));
     Polynomial poly(sourceTerm);
+    vector< vector<int> > paths;
 
     Edges_T covered; // This will hold the set of covered edges so far
     Edges_T sausage; // This will hold the current sausage: edges being considered for addition
@@ -727,7 +691,12 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     //cout << "Last step, Sausage size: " << sausage.count() << endl;
     //cout << "1  " << sausage.count() << "  ";
     double start = getCPUTime();
-    ConsumeSausage(g, wMap, poly, sausage, targetSet);
+    paths.clear();
+    vector<int> finalEdges = cvtEdgeBitset(sausage);
+    for (int edge: finalEdges){
+        paths.push_back({edge});
+    }
+    ConsumeSausage(g, wMap, poly, sausage, targetSet, paths);
     cout << (getCPUTime() - start) << " milliseconds" << endl;
 
     //RESULT

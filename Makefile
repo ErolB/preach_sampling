@@ -1,6 +1,6 @@
 GTEST_DIR = /usr/include/gtest
 GTEST_SRC_DIR = /usr/src/gtest
-CC = clang++
+CC = g++
 
 EXC_FLAGS = --std=c++11 -o
 OBJ_FLAGS = --std=c++11 -c
@@ -41,7 +41,7 @@ classify: classify_nodes.o Cut.o Graph.o preach.o util.o
 	$(CC) $(EXC_FLAGS) classify classify_nodes.o Cut.o Graph.o util.o
 
 tests.o: tests.cpp
-	$(CC) $(OBJ_FLAGS)  tests.cpp
+	$(CC) $(OBJ_FLAGS) tests.cpp
 
 tests: tests.o Probing.o Sampling.o Graph.o Cut.o util.o libgtest.a
 	$(CC) --std=c++11 -o tests $^ -lpthread
