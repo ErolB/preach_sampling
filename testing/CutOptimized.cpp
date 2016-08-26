@@ -494,6 +494,46 @@ vector< vector<int> > PathsFromCutTesting(ListDigraph& g, vector<int> startCut, 
     return all_paths;
 }
 
+void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes){
+    // Build a dictionary of edgeId -> source and target node ids
+    // Will need it with each collapsation operation within this sausage
+    map< int, vector<int> > edgeTerminals;
+    map< pair< int, int >, int > reverseTerminalMap;
+
+    FOREACH_BS(edgeId, sausage){
+        vector<int> terminals;
+        ListDigraph::Arc arc = g.arcFromId(edgeId);
+        terminals.push_back(g.id(g.source(arc)));
+        terminals.push_back(g.id(g.target(arc)));
+        edgeTerminals[edgeId] = terminals;
+        reverseTerminalMap[make_pair(g.id(g.source(arc)), g.id(g.target(arc)))] = edgeId;
+    }
+    // build vectors from sausage
+    vector<int> edgeIdList;
+    for (int edgeId = 0; edgeId < sausage.size(); edgeId++) {
+        if (sausage[edgeId]) {
+            edgeIdList.push_back(edgeId);  // edgeId indexing is zero-based
+        }
+    }
+
+    //start adding the edges in the current sausage
+    //here we collapse after each addition (arbitrary)
+    double start = getCPUTime();
+    for (int edgeId: edgeIdList) {
+        cout << edgeId << " ";
+        if (sausage[edgeId]) {
+            //cout << "Adding edge " << edgeCounter;
+            poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
+            //cout << ", Collapsing!" << endl;
+            poly.collapse(sausage, edgeTerminals, endNodes);
+        }
+    }
+    cout << "***" << (getCPUTime() - start) << "***" << endl;
+
+    //Advance the polynomial: make it ready for next sausage
+    poly.advance();
+}
+
 void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& sausage, Nodes_T& endNodes, vector< vector<int> > paths){
     // Build a dictionary of edgeId -> source and target node ids
     // Will need it with each collapsation operation within this sausage
@@ -573,12 +613,20 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
         // find ideal edge ("greedy" approach)
         vector<int> bestEdges;
         for (int i = 1; i < stop_count; i++) { // "i" is how close a path is to completion
-            int maxScore = 0;
+            cout << "i = " << i << endl;
+            int maxScore = -1;
             for (int edgeId: tempEdgeList) {
                 map<int, int> scoreMap = edgeScores[edgeId];
-                if (!scoreMap.count(i)){ break; } // break out of loop if score is not available
+                ////
+                cout << "print dictionary" << endl;
+                for (auto item: scoreMap){
+                    cout << item.first << " - " << item.second << endl;
+                }
+                ////
+                if (!scoreMap.count(i)){ continue; } // break out of loop if score is not available
                 if (scoreMap[i] > maxScore){ maxScore = scoreMap[i]; }
             }
+            if (maxScore == -1) { continue; }
             // now that the maximum score is known, find the ideal edges
             bestEdges.clear();  // start over
             for (int edgeId: tempEdgeList) {
@@ -691,12 +739,7 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     //cout << "Last step, Sausage size: " << sausage.count() << endl;
     //cout << "1  " << sausage.count() << "  ";
     double start = getCPUTime();
-    paths.clear();
-    vector<int> finalEdges = cvtEdgeBitset(sausage);
-    for (int edge: finalEdges){
-        paths.push_back({edge});
-    }
-    ConsumeSausage(g, wMap, poly, sausage, targetSet, paths);
+    ConsumeSausage(g, wMap, poly, sausage, targetSet);
     cout << (getCPUTime() - start) << " milliseconds" << endl;
 
     //RESULT

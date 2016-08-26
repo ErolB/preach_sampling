@@ -28,7 +28,7 @@ def loadData():
 def runTests(execFile, data, lock):
     file = open(outputFile, 'a')
     graphFile = testDataLocation + data[0]
-    if (graphFile != testDataLocation + 'BA_2_10_4.txt'): #and (graphFile != testDataLocation + 'BA_2_20_2.txt'):
+    if (graphFile != testDataLocation + 'BA_2_10_4.txt') and (graphFile != testDataLocation + 'BA_2_20_2.txt'):
         return
     temp = open((graphFile[:-4] + "_pipe.txt"), "w")
     print('start')
