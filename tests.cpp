@@ -458,6 +458,42 @@ bool testHeuristic(char graphFile[], char sourcesFile[], char targetsFile[]){
     }
 }
 
+bool testHorizontalCuts(char graphFile[], char sourcesFile[], char targetsFile[]){
+    // create graph structure
+    ListDigraph g;
+    NameToNode nodeMap; // mapping from names to nodes in the graph
+    ListDigraph::Node source; // start node
+    ListDigraph::Node target; // target node
+    WeightMap wMap(g); // keeps track of weights
+    NodeNames nNames(g); // node names
+    ArcIntMap arcIdMap(g); // mapping from the arcs to their ids in the original graph
+    CreateGraph(graphFile, g, nNames, nodeMap, wMap, arcIdMap);
+    UnifyTerminals(g, wMap, nNames, nodeMap, arcIdMap, sourcesFile, targetsFile);
+    source = FindNode(SOURCE, g, nNames, nodeMap);
+    target = FindNode(SINK, g, nNames, nodeMap);
+    vector<pair<vector<int>, int> > edgeSubsets;
+    vector<Cut> cuts;
+    FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
+    cout << "cuts: " << endl;
+    for (Cut current_cut: cuts){
+        for (int edge: cvtBitset(current_cut.getMiddle())){
+            cout << edge << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+    map< int, set<int> > result = HorizontalCuts(cuts[1], cuts[2], g);
+    for (auto item: result){
+        cout << item.first << endl;
+        for (int edge: item.second){
+            ListDigraph::Arc edge_obj = g.arcFromId(edge);
+            cout << g.id(g.source(edge_obj)) << " -> " << g.id(g.target(edge_obj)) << endl;
+        }
+    }
+    cout << endl;
+    return true;
+}
+
 TEST(GraphTest, small){
     char graph_file[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_5_2.txt";
     EXPECT_TRUE(createGraphTest(graph_file));
@@ -495,9 +531,9 @@ TEST(CutTest, medium2){
 }
 
 TEST(CutTest, large){
-    char graphFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_4_35_2.txt";
-    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_4_35_2.sources";
-    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_4_35_2.targets";
+    char graphFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_4_65_3.txt";
+    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_4_65_3.sources";
+    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_4_65_3.targets";
     EXPECT_TRUE(testCuts(graphFile, sourcesFile, targetsFile));
 }
 /*
@@ -544,6 +580,20 @@ TEST(HeuristicTest, test){
     char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.sources";
     char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.targets";
     testHeuristic(graphFile, sourcesFile, targetsFile);
+}
+
+TEST(HorizontalCutsTest, test){
+    /*
+    char graphFile[] = "/home/erol/Documents/preach_sampling/data/unit_testing/graph1";
+    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/unit_testing/sources1";
+    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/unit_testing/targets1";
+    */
+    
+    char graphFile[] = "/home/erol/Documents/preach_sampling/data/kegg/cellcycle/Renal.net";
+    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/kegg/cellcycle/sources.txt";
+    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/kegg/cellcycle/targets.txt";
+    
+    testHorizontalCuts(graphFile, sourcesFile, targetsFile);
 }
 
 int main(int argc, char** argv){

@@ -517,15 +517,95 @@ void PrintCuts(vector<Cut>& cuts, ListDigraph& g){
         }END_FOREACH;
 }
 
-void HorizontalPaths(vector<int> edges_covered, ListDigraph::Node start_node, Cut end_cut, ListDigraph& g){
+map< int, set<int> > HorizontalCuts(Cut start, Cut end, ListDigraph& g){
     cout << "finding horizontal cuts " << endl;
-    for (ListDigraph::OutArcIt edge(g,start_node); edge != INVALID; ++edge){
-        int target_id = g.id(g.target(edge));
-        if (!end_cut.getMiddle()[target_id]) {  // if the edge is not on the target cut
-            edges_covered.push_back(g.id(edge));
-            HorizontalPaths(edges_covered, start_node, end_cut, g);
+    vector<int> sources = cvtBitset(start.getMiddle());
+    vector<int> targets = cvtBitset(end.getMiddle());
+    map< int, set<int> > edge_classes;
+    int current_class = 0;
+    for (int source: sources){
+        //cout << "source: " << source << endl;
+        // find all edges coming directly from the source node
+        set<int> reachable_edges;
+        for (ListDigraph::OutArcIt a(g, g.nodeFromId(source)); a != INVALID; ++a) {
+            reachable_edges.insert(g.id(g.target(a)));
+        }
+        set<int> front = reachable_edges; // outermost edges
+        //expand list to include all edges along paths to the target cut
+        bool finished = false;
+        set<int> new_front;
+        while (!finished) {
+            new_front.clear();
+            for (int edge: front){
+                // check if edge leads to a target
+                bool on_target = false;
+                for (int end: targets){
+                    if (g.id(g.target(g.arcFromId(edge))) == end) { 
+                        on_target = true;
+                        break; 
+                    }
+                }
+                if (on_target) { continue; }
+                // add new edges
+                for (ListDigraph::OutArcIt a(g, g.nodeFromId(edge)); a != INVALID; ++a) {
+                    // check if edge has already been counted
+                    bool already_counted = false;
+                    for (int counted_edge: reachable_edges){
+                        if (g.id(g.target(a)) == counted_edge) {
+                            already_counted = true;
+                            break;
+                        }
+                    }
+                    if (already_counted) { continue; }
+                    // add edge
+                    new_front.insert(g.id(g.target(a)));
+                }
+            }
+            if (front == new_front){
+                finished = true;
+            } else {
+                // updating
+                front = new_front;
+                for (int edge: front){
+                    reachable_edges.insert(edge);
+                }
+            }
+            //cout << "front: ";
+            //for (int edge: front){
+            //    cout << edge << " ";
+            //}
+            //cout << endl;
+        }
+        // check for overlap with existing classes
+        bool new_class = true;  // indicates whether the set of reachable edges is in a new eqivalence class
+        for (auto edge_class: edge_classes){
+            bool in_class = false;
+            //cout << "edge class: " << edge_class.first << endl;
+            for (int edge: edge_class.second){
+                //cout << edge << endl;
+                for (int new_edge: reachable_edges){
+                    if (edge == new_edge) {
+                        in_class = true;
+                        break;
+                    }
+                }
+                if (in_class) { break; }
+            }
+            // merge edge sets if there is a match
+            if (in_class){
+                for (int new_edge: reachable_edges){
+                    edge_classes[edge_class.first].insert(new_edge);
+                }
+                new_class = false;
+                break;
+            }
+        }
+        if (new_class){
+            edge_classes[current_class] = reachable_edges;
+            current_class++;
         }
     }
+    return edge_classes;
 }
 
 // returns a vector of the indicies of all ones
