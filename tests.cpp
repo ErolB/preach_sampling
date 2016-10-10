@@ -474,6 +474,14 @@ bool testHorizontalCuts(char graphFile[], char sourcesFile[], char targetsFile[]
     vector<pair<vector<int>, int> > edgeSubsets;
     vector<Cut> cuts;
     FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
+    cout << "network structure:" << endl;
+    for (ListDigraph::NodeIt n(g); n != INVALID; ++n){
+        cout << g.id(n) << " -> ";
+        for (ListDigraph::OutArcIt o(g, n); o != INVALID; ++o){
+            cout << g.id(o) << ", ";
+        }
+        cout << endl;
+    }
     cout << "cuts: " << endl;
     for (Cut current_cut: cuts){
         for (int edge: cvtBitset(current_cut.getMiddle())){
@@ -482,16 +490,42 @@ bool testHorizontalCuts(char graphFile[], char sourcesFile[], char targetsFile[]
         cout << endl;
     }
     cout << endl;
-    map< int, set<int> > result = HorizontalCuts(cuts[1], cuts[2], g);
-    for (auto item: result){
-        cout << item.first << endl;
-        for (int edge: item.second){
-            ListDigraph::Arc edge_obj = g.arcFromId(edge);
-            cout << g.id(g.source(edge_obj)) << " -> " << g.id(g.target(edge_obj)) << endl;
+    for (int i = 0; i < (cuts.size()-1); i++){
+        map< int, set<int> > result = HorizontalCuts(cvtBitset(cuts[i].getMiddle()), cvtBitset(cuts[i+1].getMiddle()), g);
+        for (auto item: result){
+            cout << item.first << endl;
+            for (int edge: item.second){
+                ListDigraph::Arc edge_obj = g.arcFromId(edge);
+                cout << g.id(g.source(edge_obj)) << " -> " << g.id(g.target(edge_obj)) << endl;
+            }
         }
+        cout << endl;
     }
-    cout << endl;
     return true;
+}
+
+bool testSolveOptimized(char graphFile[], char sourcesFile[], char targetsFile[]){
+    // create graph structure
+    ListDigraph g;
+    NameToNode nodeMap; // mapping from names to nodes in the graph
+    ListDigraph::Node source; // start node
+    ListDigraph::Node target; // target node
+    WeightMap wMap(g); // keeps track of weights
+    NodeNames nNames(g); // node names
+    ArcIntMap arcIdMap(g); // mapping from the arcs to their ids in the original graph
+    CreateGraph(graphFile, g, nNames, nodeMap, wMap, arcIdMap);
+    UnifyTerminals(g, wMap, nNames, nodeMap, arcIdMap, sourcesFile, targetsFile);
+    source = FindNode(SOURCE, g, nNames, nodeMap);
+    target = FindNode(SINK, g, nNames, nodeMap);
+    vector<pair<vector<int>, int> > edgeSubsets;
+    vector<Cut> cuts;
+    FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
+    double result1 = Solve(g, wMap, source, target, cuts);
+    cout << result1 << endl;
+    FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
+    double result2 = SolveOptimized(g, wMap, source, target, cuts);
+    cout << result2 << endl;
+    return(abs(result1 - result2) < 0.01);
 }
 
 TEST(GraphTest, small){
@@ -589,11 +623,19 @@ TEST(HorizontalCutsTest, test){
     char targetsFile[] = "/home/erol/Documents/preach_sampling/data/unit_testing/targets1";
     */
     
-    char graphFile[] = "/home/erol/Documents/preach_sampling/data/kegg/cellcycle/Renal.net";
-    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/kegg/cellcycle/sources.txt";
-    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/kegg/cellcycle/targets.txt";
+    char graphFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.txt";
+    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.sources";
+    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.targets";
     
     testHorizontalCuts(graphFile, sourcesFile, targetsFile);
+}
+
+TEST(OptimizedSolveTest, test){
+    char graphFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.txt";
+    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.sources";
+    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.targets";
+
+    EXPECT_TRUE(testSolveOptimized(graphFile, sourcesFile, targetsFile));
 }
 
 int main(int argc, char** argv){

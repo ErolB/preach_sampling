@@ -58,9 +58,11 @@ void Preprocess(ListDigraph& g, WeightMap& wMap, NodeNames& nMap, NameToNode& no
 
 double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts);
 
+double SolveOptimized(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts);
+
 void PrintCuts(vector<Cut>& cuts, ListDigraph& g);
 
-map< int, set<int> > HorizontalCuts(Cut start, Cut end, ListDigraph& g);
+map< int, set<int> > HorizontalCuts(vector<int> start, vector<int> end, ListDigraph& g);
 
 vector<int> cvtBitset(Nodes_T input);
 

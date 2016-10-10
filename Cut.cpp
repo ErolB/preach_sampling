@@ -468,17 +468,24 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     Edges_T covered; // This will hold the set of covered edges so far
     Edges_T sausage; // This will hold the current sausage: edges being considered for addition
 
+    vector<int> current = {g.id(source)}; // used in the formation of horizontal cuts
+
     // repeat until no cuts left
     dprintf("starting loop\n");
     while(cuts.size() > 0){
         dprintf("beginning iteration\n");
         //select a cut: here we just select the first one (arbitrary)
         Cut nextCut = cuts.front();
+        vector<int> next = cvtBitset(nextCut.getMiddle());
         //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
         //cout << nextCut.size() << "  ";
         cuts.erase(cuts.begin());
         // Identify the sausage: The current set of edges in question
         sausage = nextCut.getCoveredEdges() & ~covered;
+        vector<int> temp = cvtEdgeBitset(sausage);
+        for (int num: temp){
+            cout << num << endl;
+        }
         //cout << ", Sausage size: " << sausage.count() << endl;
         //cout << sausage.count() << "  ";
         //Consume the current sausage
@@ -488,13 +495,101 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
             cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
             exit(3);
         }
-        //mark the sausage as covered
+            //mark the sausage as covered
         covered |= sausage;
+        /*
+        map< int, set<int> > edge_classes = HorizontalCuts(current, next, g);
+        for (auto h: edge_classes){
+            Edges_T horizontal_segment;
+            for (int edge: h.second){
+                horizontal_segment.set(edge);
+            }
+            try{
+                ConsumeSausage(g, wMap, poly, horizontal_segment, nextCut.getMiddle());
+            }catch(exception& e){
+                cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+                exit(3);
+            }
+            //mark the sausage as covered
+            covered |= horizontal_segment;
+        }
+        */
         //remove obsolete cuts
         RemoveObsoleteCuts(cuts, nextCut);
     }
     dprintf("Loop finished\n");
 
+    // Last: add the edges between the last cut and the target node
+    Edges_T allEdges; // set of all edges in the network
+    EdgesAsBitset(g, allEdges);
+    sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
+    Nodes_T targetSet; // The last stop
+    targetSet.set(g.id(target));
+    //cout << "Last step, Sausage size: " << sausage.count() << endl;
+    //cout << "1  " << sausage.count() << "  ";
+    ConsumeSausage(g, wMap, poly, sausage, targetSet);
+
+    //RESULT
+    return poly.getResult();
+    //return -1.0;
+}
+
+double SolveOptimized(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts){
+    //FOR DEBUGGING - REMOVE
+    //sort(cuts.begin(), cuts.end(), compareCuts);
+    // set up the source term and start the polynomial
+    Nodes_T zSource, wSource;
+    zSource.set(g.id(source));
+    vector<Term> sourceTerm;
+    sourceTerm.push_back(Term(zSource, wSource, 1.0));
+    Polynomial poly(sourceTerm);
+
+    Edges_T covered; // This will hold the set of covered edges so far
+    Edges_T sausage; // This will hold the current sausage: edges being considered for addition
+
+    vector<int> current = {g.id(source)}; // used in the formation of horizontal cuts
+    Cut nextCut = cuts.front();
+    vector<int> next = cvtBitset(nextCut.getMiddle());
+
+    // repeat until no cuts left
+    cout << "starting with " << cuts.size() << " cuts";
+    while(cuts.size() > 0){
+        cout << cuts.size() << "cuts" << endl;
+        //select a cut: here we just select the first one (arbitrary)
+        //Cut nextCut = cuts.front();
+        //vector<int> next = cvtBitset(nextCut.getMiddle());
+        //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
+        //cout << nextCut.size() << "  ";
+        cuts.erase(cuts.begin());
+        // Identify the sausage: The current set of edges in question
+        
+        map< int, set<int> > edge_classes = HorizontalCuts(current, next, g);
+        cout << "starting cut" << endl;
+        for (auto h: edge_classes){
+            Edges_T horizontal_segment;
+            for (int edge: h.second){
+                horizontal_segment.set(edge);
+                cout << edge << endl;
+            }
+            horizontal_segment &= ~covered;
+            try{
+                ConsumeSausage(g, wMap, poly, horizontal_segment, nextCut.getMiddle());
+            }catch(exception& e){
+                cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+                exit(3);
+            }
+            //mark the sausage as covered
+            covered |= horizontal_segment;
+        }
+        
+        //remove obsolete cuts
+        RemoveObsoleteCuts(cuts, nextCut);
+
+        current = next;
+        next = cvtBitset(cuts.front().getMiddle());
+    }
+    dprintf("Loop finished\n");
+    cout << "remaining edges" << endl;
     // Last: add the edges between the last cut and the target node
     Edges_T allEdges; // set of all edges in the network
     EdgesAsBitset(g, allEdges);
@@ -517,10 +612,8 @@ void PrintCuts(vector<Cut>& cuts, ListDigraph& g){
         }END_FOREACH;
 }
 
-map< int, set<int> > HorizontalCuts(Cut start, Cut end, ListDigraph& g){
+map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, ListDigraph& g){
     cout << "finding horizontal cuts " << endl;
-    vector<int> sources = cvtBitset(start.getMiddle());
-    vector<int> targets = cvtBitset(end.getMiddle());
     map< int, set<int> > edge_classes;
     int current_class = 0;
     for (int source: sources){
