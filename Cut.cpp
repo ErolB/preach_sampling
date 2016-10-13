@@ -569,9 +569,12 @@ double SolveOptimized(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source
             Edges_T horizontal_segment;
             for (int edge: h.second){
                 horizontal_segment.set(edge);
-                cout << edge << endl;
             }
             horizontal_segment &= ~covered;
+            for (int item: cvtEdgeBitset(horizontal_segment)){
+                cout << item << endl;
+            }
+            cout << "consuming sausage" << endl;
             try{
                 ConsumeSausage(g, wMap, poly, horizontal_segment, nextCut.getMiddle());
             }catch(exception& e){
@@ -619,11 +622,15 @@ map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, Li
     for (int source: sources){
         //cout << "source: " << source << endl;
         // find all edges coming directly from the source node
+        /*
         set<int> reachable_edges;
         for (ListDigraph::OutArcIt a(g, g.nodeFromId(source)); a != INVALID; ++a) {
             reachable_edges.insert(g.id(g.target(a)));
         }
-        set<int> front = reachable_edges; // outermost edges
+        */
+        set<int> reachable_edges;
+        set<int> front; // outermost edges 
+        front.insert(source);
         //expand list to include all edges along paths to the target cut
         bool finished = false;
         set<int> new_front;
