@@ -491,11 +491,12 @@ bool testHorizontalCuts(char graphFile[], char sourcesFile[], char targetsFile[]
     }
     cout << endl;
     for (int i = 0; i < (cuts.size()-1); i++){
-        map< int, set<int> > result = HorizontalCuts(cvtBitset(cuts[i].getMiddle()), cvtBitset(cuts[i+1].getMiddle()), g);
+        map< int, set<int> > result = HorizontalCuts(cvtBitset(cuts[i].getMiddle()), cvtBitset(cuts[i+1].getRight()), g);
         for (auto item: result){
-            cout << item.first << endl;
+            cout << "segment " << item.first << endl;
             for (int edge: item.second){
                 ListDigraph::Arc edge_obj = g.arcFromId(edge);
+                cout << edge << endl;
                 cout << g.id(g.source(edge_obj)) << " -> " << g.id(g.target(edge_obj)) << endl;
             }
         }
@@ -522,6 +523,8 @@ bool testSolveOptimized(char graphFile[], char sourcesFile[], char targetsFile[]
     FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
     double result1 = Solve(g, wMap, source, target, cuts);
     cout << result1 << endl;
+    cuts.clear();
+    edgeSubsets.clear();
     FindSomeGoodCuts(g, source, target, cuts, edgeSubsets);
     double result2 = SolveOptimized(g, wMap, source, target, cuts);
     cout << result2 << endl;
@@ -631,9 +634,9 @@ TEST(HorizontalCutsTest, test){
 }
 
 TEST(OptimizedSolveTest, test){
-    char graphFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.txt";
-    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.sources";
-    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_4.targets";
+    char graphFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_3.txt";
+    char sourcesFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_3.sources";
+    char targetsFile[] = "/home/erol/Documents/preach_sampling/data/synthetic/BA_2_10_3.targets";
 
     EXPECT_TRUE(testSolveOptimized(graphFile, sourcesFile, targetsFile));
 }

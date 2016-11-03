@@ -359,7 +359,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
             edgeIdList.push_back(edgeId);  // edgeId indexing is zero-based
         }
     }
-
+    /*
     //randomly rearrange edge IDs
     vector<int> temp;
     int size = edgeIdList.size();
@@ -371,7 +371,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
         edgeIdList.erase(edgeIdList.begin() + index);
     }
     edgeIdList = temp;
-
+    */
     //start adding the edges in the current sausage
     //here we collapse after each addition (arbitrary)
     int edgeCounter = 0;
@@ -523,6 +523,8 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     Edges_T allEdges; // set of all edges in the network
     EdgesAsBitset(g, allEdges);
     sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
+    vector<int> temp = cvtEdgeBitset(sausage);
+    for (int num: temp) { cout << num << endl; }
     Nodes_T targetSet; // The last stop
     targetSet.set(g.id(target));
     //cout << "Last step, Sausage size: " << sausage.count() << endl;
@@ -532,6 +534,47 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
     //RESULT
     return poly.getResult();
     //return -1.0;
+}
+
+void ConsumeSegments(ListDigraph& g, WeightMap& wMap, Polynomial& poly, vector<vector<int>> segments, Edges_T& sausage, Nodes_T& endNodes){
+    // Build a dictionary of edgeId -> source and target node ids
+    // Will need it with each collapsation operation within this sausage
+    map< int, vector<int> > edgeTerminals;
+
+    FOREACH_BS(edgeId, sausage){
+        vector<int> terminals;
+        ListDigraph::Arc arc = g.arcFromId(edgeId);
+        terminals.push_back(g.id(g.source(arc)));
+        terminals.push_back(g.id(g.target(arc)));
+        edgeTerminals[edgeId] = terminals;
+    }
+    /*
+    //randomly rearrange edge IDs
+    vector<int> temp;
+    int size = edgeIdList.size();
+    srand((int)getCPUTime());
+    while(temp.size() != size){
+        int random = (int) rand() / 1000;
+        int index = (random % edgeIdList.size());
+        temp.push_back(edgeIdList[index]);
+        edgeIdList.erase(edgeIdList.begin() + index);
+    }
+    edgeIdList = temp;
+    */
+    //start adding the edges in the current sausage
+    //here we collapse after each addition (arbitrary)
+    int edgeCounter = 0;
+    for (vector<int> segment: segments) {
+        for (int edgeId: segment) {
+            //cout << "Adding edge " << edgeCounter;
+            poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
+            //cout << ", Collapsing!" << endl;
+            poly.collapse(sausage, edgeTerminals, endNodes);
+        }
+    }
+
+    //Advance the polynomial: make it ready for next sausage
+    poly.advance();
 }
 
 double SolveOptimized(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDigraph::Node& target, vector<Cut>& cuts){
@@ -544,61 +587,84 @@ double SolveOptimized(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source
     sourceTerm.push_back(Term(zSource, wSource, 1.0));
     Polynomial poly(sourceTerm);
 
-    Edges_T covered; // This will hold the set of covered edges so far
+    vector<int> covered; // This will hold the set of covered edges so far
     Edges_T sausage; // This will hold the current sausage: edges being considered for addition
 
     vector<int> current = {g.id(source)}; // used in the formation of horizontal cuts
-    Cut nextCut = cuts.front();
-    vector<int> next = cvtBitset(nextCut.getMiddle());
+    //Cut nextCut = cuts.front();
+    //vector<int> next_right = cvtBitset(nextCut.getRight());
+    //vector<int> next = cvtBitset(nextCut.getMiddle());
 
     // repeat until no cuts left
-    cout << "starting with " << cuts.size() << " cuts";
+    cout << "starting with " << cuts.size() << " cuts" << endl;
     while(cuts.size() > 0){
         cout << cuts.size() << "cuts" << endl;
-        //select a cut: here we just select the first one (arbitrary)
-        //Cut nextCut = cuts.front();
-        //vector<int> next = cvtBitset(nextCut.getMiddle());
         //cout << "Available " << cuts.size() << " cuts, Using cut with size " << nextCut.size();
-        //cout << nextCut.size() << "  ";
+        //cout << nextCut.size() << "  "
+        //select a cut: here we just select the first one (arbitrary)
+        Cut nextCut = cuts.front();
+        vector<int> next = cvtBitset(nextCut.getMiddle());
+        vector<int> next_right = cvtBitset(nextCut.getRight());
         cuts.erase(cuts.begin());
-        // Identify the sausage: The current set of edges in question
-        
-        map< int, set<int> > edge_classes = HorizontalCuts(current, next, g);
+        Edges_T sausage;
+        vector<vector<int>> segments;
+
+        // print current boundary cuts
+        for (int node: current) {cout << node << " ";}
+        cout << endl;
+        for (int node: next) {cout << node << " ";}
+        cout << endl;
+        // build sausage
+        map< int, set<int> > edge_classes = HorizontalCuts(current, next_right, g);
         cout << "starting cut" << endl;
         for (auto h: edge_classes){
-            Edges_T horizontal_segment;
+            vector<int> segment;
+            cout << "new segment" << endl;
             for (int edge: h.second){
-                horizontal_segment.set(edge);
+                // check if edge has already been covered
+                bool edge_covered = false;
+                for (int covered_edge: covered){ 
+                    if (edge == covered_edge) {
+                        edge_covered = true;
+                        break;
+                    }
+                }
+                if (edge_covered) {continue;}
+                // update data sets
+                cout << edge << endl;
+                sausage.set(edge);
+                segment.push_back(edge);
+                covered.push_back(edge);
             }
-            horizontal_segment &= ~covered;
-            for (int item: cvtEdgeBitset(horizontal_segment)){
-                cout << item << endl;
-            }
-            cout << "consuming sausage" << endl;
-            try{
-                ConsumeSausage(g, wMap, poly, horizontal_segment, nextCut.getMiddle());
-            }catch(exception& e){
-                cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
-                exit(3);
-            }
+            segments.push_back(segment);
             //mark the sausage as covered
-            covered |= horizontal_segment;
         }
-        
+        // consume sausage
+        try{
+                ConsumeSegments(g, wMap, poly, segments, sausage, nextCut.getMiddle());
+        }catch(exception& e){
+            cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+            exit(3);
+        }
+        sausage.reset();
         //remove obsolete cuts
-        RemoveObsoleteCuts(cuts, nextCut);
-
+        //RemoveObsoleteCuts(cuts, nextCut);
         current = next;
-        next = cvtBitset(cuts.front().getMiddle());
     }
     dprintf("Loop finished\n");
     cout << "remaining edges" << endl;
     // Last: add the edges between the last cut and the target node
     Edges_T allEdges; // set of all edges in the network
     EdgesAsBitset(g, allEdges);
-    sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
+    //sausage = allEdges & ~covered; // the last sausage is all edges that are not yet covered
+    sausage = allEdges;
+    for (int covered_edge: covered){
+        sausage.reset(covered_edge);
+    }
     Nodes_T targetSet; // The last stop
     targetSet.set(g.id(target));
+    vector<int> temp = cvtEdgeBitset(sausage);
+    for (int num: temp) {cout << num << endl; }
     //cout << "Last step, Sausage size: " << sausage.count() << endl;
     //cout << "1  " << sausage.count() << "  ";
     ConsumeSausage(g, wMap, poly, sausage, targetSet);
@@ -615,50 +681,67 @@ void PrintCuts(vector<Cut>& cuts, ListDigraph& g){
         }END_FOREACH;
 }
 
-map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, ListDigraph& g){
-    cout << "finding horizontal cuts " << endl;
+map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> out_of_bounds, ListDigraph& g){
+    //cout << "finding horizontal cuts between" << endl;
+    //for(int node: sources) { cout << node << " "; }
+    //cout << endl;
+    //for(int node: targets) { cout << node << " "; }
+    cout << endl;
     map< int, set<int> > edge_classes;
     int current_class = 0;
     for (int source: sources){
-        //cout << "source: " << source << endl;
-        // find all edges coming directly from the source node
-        /*
-        set<int> reachable_edges;
-        for (ListDigraph::OutArcIt a(g, g.nodeFromId(source)); a != INVALID; ++a) {
-            reachable_edges.insert(g.id(g.target(a)));
-        }
-        */
-        set<int> reachable_edges;
+        set<int> covered_edges;
         set<int> front; // outermost edges 
         front.insert(source);
         //expand list to include all edges along paths to the target cut
         bool finished = false;
         set<int> new_front;
-        while (!finished) {
+        while (!front.empty()) {
+            //cout << "front: ";
+            //for (int edge: front){
+            //    cout << edge << " ";  // print out current front
+            //}
+            //cout << endl;
             new_front.clear();
-            for (int edge: front){
-                // check if edge leads to a target
+            for (int node: front){
+                // check if the node is in the target cut
+                /*
                 bool on_target = false;
                 for (int end: targets){
-                    if (g.id(g.target(g.arcFromId(edge))) == end) { 
+                    if (node == end) { 
                         on_target = true;
                         break; 
                     }
                 }
                 if (on_target) { continue; }
+                */
                 // add new edges
-                for (ListDigraph::OutArcIt a(g, g.nodeFromId(edge)); a != INVALID; ++a) {
+                for (ListDigraph::OutArcIt a(g, g.nodeFromId(node)); a != INVALID; ++a) {
                     // check if edge has already been counted
                     bool already_counted = false;
-                    for (int counted_edge: reachable_edges){
-                        if (g.id(g.target(a)) == counted_edge) {
+                    bool off_limits = false;
+                    for (int counted_edge: covered_edges){
+                        if (g.id(a) == counted_edge) {
                             already_counted = true;
                             break;
                         }
                     }
-                    if (already_counted) { continue; }
+                    for (int right_node: out_of_bounds){
+                        if (g.id(g.target(a)) == right_node){
+                            off_limits = true;
+                            break;
+                        }
+                    }
+                    for (int source_node: sources){
+                        if (g.id(g.target(a)) == source_node){ 
+                            already_counted = true;
+                            break;
+                        }
+                    }
+                    if (already_counted || off_limits) { continue; }
                     // add edge
                     new_front.insert(g.id(g.target(a)));
+                    covered_edges.insert(g.id(a));
                 }
             }
             if (front == new_front){
@@ -666,15 +749,10 @@ map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, Li
             } else {
                 // updating
                 front = new_front;
-                for (int edge: front){
-                    reachable_edges.insert(edge);
-                }
+                //for (int node: front){
+                //    reachable_edges.insert(edge);
+                //}
             }
-            //cout << "front: ";
-            //for (int edge: front){
-            //    cout << edge << " ";
-            //}
-            //cout << endl;
         }
         // check for overlap with existing classes
         bool new_class = true;  // indicates whether the set of reachable edges is in a new eqivalence class
@@ -683,7 +761,7 @@ map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, Li
             //cout << "edge class: " << edge_class.first << endl;
             for (int edge: edge_class.second){
                 //cout << edge << endl;
-                for (int new_edge: reachable_edges){
+                for (int new_edge: covered_edges){
                     if (edge == new_edge) {
                         in_class = true;
                         break;
@@ -693,7 +771,7 @@ map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, Li
             }
             // merge edge sets if there is a match
             if (in_class){
-                for (int new_edge: reachable_edges){
+                for (int new_edge: covered_edges){
                     edge_classes[edge_class.first].insert(new_edge);
                 }
                 new_class = false;
@@ -701,7 +779,7 @@ map< int, set<int> > HorizontalCuts(vector<int> sources, vector<int> targets, Li
             }
         }
         if (new_class){
-            edge_classes[current_class] = reachable_edges;
+            edge_classes[current_class] = covered_edges;
             current_class++;
         }
     }
@@ -839,7 +917,7 @@ void optimizedConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, 
         }
         edgeScores[edgeId] = scoreMap;
     }
-    /*
+    
     //randomly rearrange edge IDs
     vector<int> temp;
     int size = edgeIdList.size();
@@ -853,7 +931,7 @@ void optimizedConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, 
     edgeIdList = temp;
 
     // order edges based on scores
-    */
+    
     int stop_count = 10;
     vector<int> tempEdgeList = edgeIdList;
     edgeIdList.clear();

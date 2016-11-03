@@ -1,0 +1,38 @@
+#Original graph size: 30 nodes, 79 edges
+#Modified graph size: 31 nodes, 81 edges
+#V	E	P	T
+31	81	finding cuts
+original cuts: 4
+starting
+converting to vector
+entering function
+---
+6 1terms
+1 1terms
+***0.021***
+41 2terms
+71 4terms
+36 8terms
+70 16terms
+57 32terms
+46 64terms
+63 128terms
+30 256terms
+77 512terms
+7 1024terms
+75 2048terms
+13 4096terms
+43 8192terms
+3 16384terms
+73 32768terms
+29 65536terms
+34 131072terms
+4 262144terms
+51 524288terms
+39 1048576terms
+2 2097152terms
+44 4194304terms
+40 8388608terms
+49 
+EXCEPTION: std::bad_alloc: St9bad_alloc
+@@@

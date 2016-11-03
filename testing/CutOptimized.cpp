@@ -520,7 +520,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
     //here we collapse after each addition (arbitrary)
     double start = getCPUTime();
     for (int edgeId: edgeIdList) {
-        cout << edgeId << " ";
+        //cout << edgeId << " ";
         if (sausage[edgeId]) {
             //cout << "Adding edge " << edgeCounter;
             poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
@@ -613,15 +613,15 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
         // find ideal edge ("greedy" approach)
         vector<int> bestEdges;
         for (int i = 1; i < stop_count; i++) { // "i" is how close a path is to completion
-            cout << "i = " << i << endl;
+            //cout << "i = " << i << endl;
             int maxScore = -1;
             for (int edgeId: tempEdgeList) {
                 map<int, int> scoreMap = edgeScores[edgeId];
                 ////
-                cout << "print dictionary" << endl;
-                for (auto item: scoreMap){
-                    cout << item.first << " - " << item.second << endl;
-                }
+                //cout << "print dictionary" << endl;
+                //for (auto item: scoreMap){
+                //    cout << item.first << " - " << item.second << endl;
+                //}
                 ////
                 if (!scoreMap.count(i)){ continue; } // break out of loop if score is not available
                 if (scoreMap[i] > maxScore){ maxScore = scoreMap[i]; }
@@ -661,7 +661,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
                     // if the score map contains an entry for that distance from completion
                     if (scoreMap.count(counter) != 0) { scoreMap[counter]++; }
                     else { scoreMap[counter] = 1; }
-                    cout << "edge: " << edgeId << ", score: " << counter << endl;
+                    //cout << "edge: " << edgeId << ", score: " << counter << endl;
                 }
             }
             edgeScores[edgeId] = scoreMap;
@@ -672,7 +672,7 @@ void ConsumeSausage(ListDigraph& g, WeightMap& wMap, Polynomial& poly, Edges_T& 
     //here we collapse after each addition (arbitrary)
     double start = getCPUTime();
     for (int edgeId: edgeIdList) {
-        cout << edgeId << " ";
+        //cout << edgeId << " ";
         if (sausage[edgeId]) {
             //cout << "Adding edge " << edgeCounter;
             poly.addEdge(edgeId, wMap[g.arcFromId(edgeId)]);
@@ -721,6 +721,7 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
             ConsumeSausage(g, wMap, poly, sausage, nextCut.getMiddle(), paths);
         }catch(exception& e){
             cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+            cout << "@@@";
             exit(3);
         }
         //mark the sausage as covered

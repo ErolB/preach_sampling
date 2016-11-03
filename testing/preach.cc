@@ -72,6 +72,7 @@ int main(int argc, char** argv)
 	if (numEdges == 0){ // empty graph - source and target unreachable
 	    //cout << ">>0.0" << endl;
 	    cout << "#>>result = 0.0" << endl;
+        cout << "@@@";
 	    return 0;
     }
 

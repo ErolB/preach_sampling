@@ -1,0 +1,195 @@
+#Original graph size: 5 nodes, 5 edges
+#Modified graph size: 5 nodes, 7 edges
+#V	E	P	T
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+6 1terms
+2 2terms
+3 2terms
+***0.055***
+5 4terms
+4 6terms
+***0.049***
+---
+1 4terms
+0 2terms
+***0.042***
+0.138 milliseconds
+0.749915	0.515
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+6 1terms
+2 2terms
+3 2terms
+***0.029***
+5 4terms
+4 6terms
+***0.044***
+---
+1 4terms
+0 2terms
+***0.031***
+0.094 milliseconds
+0.749915	0.346
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+3 2terms
+2 4terms
+6 4terms
+***0.042***
+5 4terms
+4 6terms
+***0.045***
+---
+1 4terms
+0 2terms
+***0.031***
+0.094 milliseconds
+0.749915	0.354
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+3 2terms
+2 4terms
+6 4terms
+***0.042***
+5 4terms
+4 6terms
+***0.044***
+---
+1 4terms
+0 2terms
+***0.032***
+0.094 milliseconds
+0.749915	0.353
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+3 2terms
+2 4terms
+6 4terms
+***0.042***
+5 4terms
+4 6terms
+***0.046***
+---
+0 8terms
+1 3terms
+***0.049***
+0.11 milliseconds
+0.749915	0.37
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+3 2terms
+6 2terms
+2 2terms
+***0.03***
+4 4terms
+5 2terms
+***0.032***
+---
+0 8terms
+1 3terms
+***0.058***
+0.143 milliseconds
+0.749915	0.378
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+3 2terms
+6 2terms
+2 2terms
+***0.033***
+4 4terms
+5 2terms
+***0.033***
+---
+0 8terms
+1 3terms
+***0.051***
+0.115 milliseconds
+0.749915	0.409
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+2 2terms
+3 4terms
+6 4terms
+***0.075***
+4 4terms
+5 2terms
+***0.031***
+---
+0 8terms
+1 3terms
+***0.048***
+0.11 milliseconds
+0.749915	0.395
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+2 2terms
+3 4terms
+6 4terms
+***0.052***
+4 4terms
+5 2terms
+***0.032***
+---
+0 8terms
+1 3terms
+***0.051***
+0.143 milliseconds
+0.749915	0.433
+5	7	finding cuts
+original cuts: 2
+starting
+converting to vector
+entering function
+---
+2 2terms
+3 4terms
+6 4terms
+***0.043***
+4 4terms
+5 2terms
+***0.032***
+---
+1 4terms
+0 2terms
+***0.033***
+0.097 milliseconds
+0.749915	0.352
+#>>result = 0.749915
+@@@

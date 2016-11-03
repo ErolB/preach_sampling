@@ -1,0 +1,4 @@
+#Original graph size: 10 nodes, 17 edges
+#Modified graph size: 2 nodes, 0 edges
+#>>result = 0.0
+@@@

@@ -1,0 +1,12 @@
+#Original graph size: 50 nodes, 138 edges
+#Modified graph size: 50 nodes, 138 edges
+#V	E	P	T
+50	138	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+***0.02***

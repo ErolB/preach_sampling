@@ -21,11 +21,6 @@ def loadData():
         sourceName = fileName[:-3] + 'sources'
         targetName = fileName[:-3] + 'targets'
         if (targetName in fileNames) and (sourceName in fileNames):
-            # this is a temporary filter
-            if int(fileName.split('_')[2]) > 30:
-                continue
-            ############################
-            print(fileName)
             testingData.append( (fileName, sourceName, targetName) )
     return testingData
 
@@ -56,17 +51,16 @@ def runTests(execFile, data, lock):
                 break
     timeList = parse(buffer)
     print(timeList)
-    if timeList:
-        # write to output file
-        lock.acquire()
-        try:
-            file.write(str(data[0]) + ',' + execFile + ',' + str(np.mean(timeList)) + ',' + str(np.std(timeList)) + '\n')
-            print('writing')
-        except:
-            print('error')
-        finally:
-            lock.release()
-            pass
+    # write to output file
+    lock.acquire()
+    try:
+        file.write(str(data[0]) + ',' + execFile + ',' + str(np.mean(timeList)) + ',' + str(np.std(timeList)) + '\n')
+        print('writing')
+    except:
+        print('error')
+    finally:
+        lock.release()
+        pass
     file.close()
 
 # this parses out and organizes the output data
@@ -82,17 +76,15 @@ def parse(rawOutput):
 
 # this distributes the tasks between the cores
 def distributeTasks(tasks):
-    workload = int(np.ceil(float(len(tasks)) / coreCount))
-    print(len(tasks), workload)
+    workload = int(np.ceil(len(tasks) / coreCount))
     lock = multiprocessing.Lock()
     taskGroups = []
     counter = 0
     while counter < len(tasks):
         if (len(tasks) - counter) < workload:
             taskGroups.append(tasks[counter:])
-            break
         else:
-            #print(counter, (counter+workload))
+            print(counter, (counter+workload))
             taskGroups.append(tasks[counter:(counter+workload)])
             counter += workload
     for group in taskGroups:
@@ -111,6 +103,5 @@ if __name__ == '__main__':
     testCycles = configData['testCycles']
     testDataLocation = startPath + configData['dataPath']
     # run tests
-    print(coreCount)
     data = loadData()
     distributeTasks(data)

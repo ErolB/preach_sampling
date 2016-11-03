@@ -1,0 +1,319 @@
+#Original graph size: 20 nodes, 34 edges
+#Modified graph size: 16 nodes, 35 edges
+#V	E	P	T
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.069***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms
+106752terms
+***2116.09***
+256terms
+352terms
+384terms
+***4.005***
+---
+128terms
+93terms
+45terms
+21terms
+9terms
+3terms
+0terms
+0terms
+0terms
+0terms
+***1.533***
+1.583 milliseconds
+0.999276	2135.02
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.027***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms
+106752terms
+***2103.15***
+256terms
+352terms
+384terms
+***3.941***
+---
+128terms
+93terms
+45terms
+21terms
+9terms
+3terms
+0terms
+0terms
+0terms
+0terms
+***1.519***
+1.568 milliseconds
+0.999276	2114.53
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.027***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms
+106752terms
+***2094.75***
+256terms
+352terms
+384terms
+***4.011***
+---
+128terms
+93terms
+45terms
+21terms
+9terms
+3terms
+0terms
+0terms
+0terms
+0terms
+***1.534***
+1.584 milliseconds
+0.999276	2106.22
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.027***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms
+106752terms
+***2090.52***
+256terms
+352terms
+384terms
+***3.945***
+---
+128terms
+93terms
+45terms
+21terms
+9terms
+3terms
+0terms
+0terms
+0terms
+0terms
+***1.52***
+1.57 milliseconds
+0.999276	2101.87
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.027***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms
+106752terms
+***2088.35***
+256terms
+352terms
+384terms
+***3.963***
+---
+128terms
+93terms
+45terms
+21terms
+9terms
+3terms
+0terms
+0terms
+0terms
+0terms
+***1.512***
+1.561 milliseconds
+0.999276	2099.72
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.027***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms
+106752terms
+***2088.25***
+256terms
+352terms
+384terms
+***3.97***
+---
+128terms
+93terms
+45terms
+21terms
+9terms
+3terms
+0terms
+0terms
+0terms
+0terms
+***1.527***
+1.576 milliseconds
+0.999276	2099.66
+16	35	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+1terms
+1terms
+1terms
+1terms
+***0.026***
+2terms
+4terms
+8terms
+16terms
+32terms
+64terms
+128terms
+236terms
+468terms
+928terms
+1792terms
+3392terms
+6656terms
+11264terms
+19456terms
+31872terms
+63744terms

@@ -1,0 +1,635 @@
+#Original graph size: 30 nodes, 56 edges
+#Modified graph size: 22 nodes, 48 edges
+#V	E	P	T
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.016***
+33 2terms
+44 4terms
+38 8terms
+43 16terms
+29 32terms
+42 64terms
+26 128terms
+23 256terms
+41 512terms
+34 1024terms
+40 2048terms
+46 4096terms
+28 8192terms
+24 16384terms
+45 32768terms
+27 65536terms
+39 131072terms
+36 252928terms
+47 505856terms
+37 335232terms
+32 383360terms
+35 557056terms
+25 278528terms
+***28548***
+14 114terms
+15 214terms
+22 424terms
+20 608terms
+21 592terms
+***8.09***
+17 128terms
+16 240terms
+8 480terms
+31 960terms
+19 1920terms
+7 3840terms
+12 7168terms
+11 11776terms
+30 20480terms
+18 22528terms
+***389.664***
+10 512terms
+9 384terms
+***3.929***
+---
+5 128terms
+2 63terms
+1 31terms
+0 15terms
+4 7terms
+6 3terms
+3 1terms
+***1.246***
+1.331 milliseconds
+0.938901	28952.9
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+36 2terms
+27 4terms
+35 8terms
+24 16terms
+37 32terms
+26 64terms
+33 128terms
+39 256terms
+40 512terms
+45 1024terms
+47 2048terms
+46 4096terms
+34 8192terms
+42 16384terms
+25 32768terms
+23 65536terms
+41 131072terms
+44 262144terms
+43 524288terms
+29 1048576terms
+32 694816terms
+28 1289408terms
+38 726848terms
+***52371.6***
+14 114terms
+15 214terms
+21 424terms
+22 512terms
+20 624terms
+***7.881***
+17 128terms
+30 240terms
+12 480terms
+31 896terms
+8 1792terms
+11 3584terms
+18 7168terms
+16 11712terms
+7 19712terms
+19 18432terms
+***373.359***
+10 512terms
+9 384terms
+***3.935***
+---
+0 128terms
+1 63terms
+3 31terms
+6 15terms
+4 7terms
+5 3terms
+2 1terms
+***1.236***
+1.32 milliseconds
+0.938901	52760.1
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+32 2terms
+29 4terms
+42 8terms
+23 16terms
+40 32terms
+37 64terms
+38 128terms
+47 256terms
+28 384terms
+39 768terms
+33 1152terms
+46 2304terms
+35 4608terms
+34 9216terms
+45 18432terms
+41 31872terms
+43 63744terms
+36 127488terms
+25 249984terms
+27 494976terms
+26 545968terms
+44 259168terms
+24 0terms
+***21295.4***
+15 114terms
+22 222terms
+20 412terms
+21 728terms
+14 1248terms
+***11.245***
+18 128terms
+8 240terms
+31 480terms
+17 960terms
+19 1920terms
+30 3840terms
+12 7680terms
+7 13344terms
+11 21504terms
+16 24576terms
+***425.117***
+9 512terms
+10 384terms
+***3.947***
+---
+6 128terms
+3 63terms
+4 31terms
+2 15terms
+1 7terms
+5 3terms
+0 1terms
+***1.253***
+1.338 milliseconds
+0.938901	21739
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+23 2terms
+42 4terms
+35 8terms
+25 16terms
+33 32terms
+39 64terms
+38 128terms
+41 256terms
+32 512terms
+47 1024terms
+36 2048terms
+46 4096terms
+40 8192terms
+28 16384terms
+24 32768terms
+29 65536terms
+45 73728terms
+34 147456terms
+37 263296terms
+26 494976terms
+43 621824terms
+44 1147136terms
+27 1968960terms
+***56093.2***
+20 114terms
+14 220terms
+22 300terms
+15 444terms
+21 592terms
+***6.911***
+17 128terms
+8 240terms
+11 480terms
+12 960terms
+7 1792terms
+30 3072terms
+19 6144terms
+18 11776terms
+16 22528terms
+31 24576terms
+***411.034***
+9 512terms
+10 384terms
+***3.947***
+---
+0 128terms
+3 63terms
+6 31terms
+5 15terms
+1 7terms
+2 3terms
+4 1terms
+***1.247***
+1.331 milliseconds
+0.938901	56518.4
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+41 2terms
+39 4terms
+40 8terms
+27 16terms
+46 32terms
+35 64terms
+32 128terms
+36 256terms
+25 512terms
+26 1024terms
+33 2048terms
+34 4096terms
+24 8192terms
+37 16384terms
+38 32768terms
+28 65536terms
+23 131072terms
+47 262144terms
+42 515072terms
+44 975872terms
+29 1908736terms
+45 1441792terms
+43 844480terms
+***65431.2***
+22 114terms
+21 222terms
+15 422terms
+20 720terms
+14 1248terms
+***11.388***
+31 128terms
+19 240terms
+8 480terms
+18 960terms
+30 1920terms
+7 3840terms
+17 7168terms
+11 14336terms
+16 19456terms
+12 24576terms
+***410.88***
+10 512terms
+9 384terms
+***3.935***
+---
+5 128terms
+1 63terms
+6 31terms
+0 15terms
+3 7terms
+2 3terms
+4 1terms
+***1.256***
+1.342 milliseconds
+0.938901	65860.7
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+45 2terms
+25 4terms
+42 8terms
+23 16terms
+39 32terms
+32 64terms
+26 128terms
+24 256terms
+33 512terms
+43 1024terms
+44 2048terms
+46 4096terms
+41 8192terms
+36 16384terms
+38 32768terms
+28 65536terms
+27 131072terms
+35 262144terms
+29 524288terms
+47 1033216terms
+34 976672terms
+37 1201184terms
+40 1225920terms
+***61491.5***
+14 114terms
+15 214terms
+20 424terms
+21 496terms
+22 400terms
+***6.818***
+16 128terms
+30 240terms
+18 464terms
+31 928terms
+7 1856terms
+8 3328terms
+11 6656terms
+12 12352terms
+19 17920terms
+17 24576terms
+***394.126***
+10 512terms
+9 384terms
+***3.916***
+---
+4 128terms
+3 63terms
+6 31terms
+5 15terms
+2 7terms
+1 3terms
+0 1terms
+***1.261***
+1.347 milliseconds
+0.938901	61899.7
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+33 2terms
+41 4terms
+40 8terms
+32 16terms
+34 32terms
+36 64terms
+38 128terms
+39 256terms
+28 512terms
+35 1024terms
+44 2048terms
+43 4096terms
+37 8192terms
+23 16384terms
+45 32768terms
+27 65536terms
+46 131072terms
+25 262144terms
+29 524288terms
+26 1048576terms
+24 2097152terms
+42 4194304terms
+47 7864320terms
+***159459***
+15 114terms
+20 222terms
+14 388terms
+21 496terms
+22 400terms
+***6.705***
+30 128terms
+17 240terms
+12 480terms
+31 896terms
+16 1792terms
+19 3328terms
+11 6656terms
+7 13312terms
+8 18176terms
+18 22528terms
+***382.243***
+10 512terms
+9 384terms
+***3.942***
+---
+1 128terms
+5 63terms
+4 31terms
+3 15terms
+2 7terms
+0 3terms
+6 1terms
+***1.236***
+1.32 milliseconds
+0.938901	159855
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.009***
+39 2terms
+34 4terms
+29 8terms
+26 16terms
+33 32terms
+45 64terms
+42 128terms
+35 256terms
+23 512terms
+40 1024terms
+43 2048terms
+46 4096terms
+25 8048terms
+38 16064terms
+37 31808terms
+41 62976terms
+27 125952terms
+44 246784terms
+36 493568terms
+32 983040terms
+24 1966080terms
+47 3932160terms
+28 2097152terms
+***100313***
+21 114terms
+20 212terms
+15 418terms
+22 672terms
+14 1248terms
+***11.092***
+31 128terms
+11 240terms
+8 480terms
+18 960terms
+19 1920terms
+7 3840terms
+17 7168terms
+16 10496terms
+30 19456terms
+12 24576terms
+***387.944***
+10 512terms
+9 384terms
+***3.944***
+---
+3 128terms
+5 63terms
+0 31terms
+1 15terms
+6 7terms
+2 3terms
+4 1terms
+***1.246***
+1.331 milliseconds
+0.938901	100719
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+43 2terms
+24 4terms
+46 8terms
+37 16terms
+42 32terms
+35 64terms
+41 128terms
+28 256terms
+32 512terms
+29 1024terms
+44 2048terms
+26 4096terms
+34 8192terms
+45 16384terms
+23 32768terms
+25 65536terms
+39 131072terms
+47 254464terms
+36 194224terms
+40 375880terms
+27 612720terms
+33 435808terms
+38 726848terms
+***33591.8***
+15 114terms
+14 222terms
+20 424terms
+21 496terms
+22 400terms
+***7.014***
+19 128terms
+8 240terms
+12 480terms
+31 896terms
+7 1792terms
+17 3072terms
+16 5952terms
+18 11776terms
+11 21504terms
+30 24576terms
+***404.058***
+10 512terms
+9 384terms
+***4.003***
+---
+2 128terms
+0 63terms
+5 31terms
+6 15terms
+1 7terms
+4 3terms
+3 1terms
+***1.245***
+1.332 milliseconds
+0.938901	34010.2
+22	48	finding cuts
+original cuts: 5
+starting
+converting to vector
+entering function
+---
+13 1terms
+***0.01***
+39 2terms
+32 4terms
+33 8terms
+44 16terms
+40 32terms
+36 64terms
+45 128terms
+47 256terms
+35 512terms
+24 1024terms
+27 2048terms
+43 4096terms
+41 8192terms
+25 16384terms
+42 32768terms
+38 65536terms
+26 131072terms
+29 262144terms
+46 294912terms
+28 573440terms
+23 1146880terms
+37 1751744terms
+34 3063808terms
+***80195.7***
+14 114terms
+15 214terms
+22 424terms
+20 608terms
+21 592terms
+***8.145***
+16 128terms
+7 240terms
+30 448terms
+19 832terms
+12 1632terms
+11 2424terms
+31 4800terms
+8 9536terms
+18 14848terms
+17 24576terms
+***342.91***
+10 512terms
+9 384terms
+***3.924***
+---
+5 128terms
+1 63terms
+0 31terms
+6 15terms
+3 7terms
+4 3terms
+2 1terms
+***1.248***
+1.332 milliseconds
+0.938901	80554
+#>>result = 0.938901
+@@@

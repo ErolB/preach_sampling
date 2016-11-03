@@ -1,0 +1,325 @@
+#Original graph size: 10 nodes, 17 edges
+#Modified graph size: 11 nodes, 19 edges
+#V	E	P	T
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+3 1terms
+1 1terms
+2 1terms
+***0.026***
+18 2terms
+9 4terms
+14 8terms
+6 14terms
+8 28terms
+16 48terms
+13 92terms
+7 148terms
+15 260terms
+17 352terms
+***5.162***
+4 16terms
+5 18terms
+12 18terms
+11 18terms
+***0.306***
+---
+0 2terms
+10 0terms
+***0.016***
+0.08 milliseconds
+0.676945	6.025
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+2 1terms
+3 1terms
+1 1terms
+***0.018***
+17 2terms
+13 4terms
+9 8terms
+8 14terms
+7 24terms
+18 48terms
+15 80terms
+6 104terms
+16 200terms
+14 300terms
+***5.371***
+11 16terms
+12 26terms
+5 46terms
+4 50terms
+***0.99***
+---
+0 2terms
+10 0terms
+***0.017***
+0.082 milliseconds
+0.676945	7.018
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+3 1terms
+1 1terms
+2 1terms
+***0.018***
+15 2terms
+9 4terms
+7 8terms
+14 16terms
+6 32terms
+17 64terms
+8 104terms
+13 160terms
+16 256terms
+18 352terms
+***5.277***
+12 16terms
+4 26terms
+11 30terms
+5 42terms
+***0.465***
+---
+10 4terms
+0 2terms
+***0.03***
+0.094 milliseconds
+0.676945	6.275
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+3 1terms
+1 1terms
+2 1terms
+***0.018***
+7 2terms
+13 4terms
+17 8terms
+18 16terms
+8 32terms
+15 52terms
+9 92terms
+16 104terms
+6 160terms
+14 300terms
+***4.045***
+4 16terms
+5 18terms
+11 18terms
+12 18terms
+***0.301***
+---
+0 2terms
+10 0terms
+***0.016***
+0.08 milliseconds
+0.676945	4.861
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+2 1terms
+3 1terms
+1 1terms
+***0.019***
+8 2terms
+17 4terms
+13 8terms
+6 14terms
+14 28terms
+16 52terms
+7 104terms
+15 196terms
+18 352terms
+9 608terms
+***7.379***
+12 16terms
+4 26terms
+5 30terms
+11 18terms
+***0.368***
+---
+10 4terms
+0 2terms
+***0.029***
+0.093 milliseconds
+0.676945	8.281
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+2 1terms
+1 1terms
+3 1terms
+***0.019***
+14 2terms
+9 4terms
+6 8terms
+18 16terms
+7 28terms
+16 56terms
+8 106terms
+15 172terms
+17 260terms
+13 212terms
+***4.692***
+5 16terms
+11 22terms
+12 34terms
+4 50terms
+***0.548***
+---
+0 2terms
+10 0terms
+***0.027***
+0.101 milliseconds
+0.676945	5.787
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+2 1terms
+1 1terms
+3 1terms
+***0.019***
+6 2terms
+16 4terms
+14 8terms
+17 16terms
+15 32terms
+8 64terms
+9 104terms
+13 148terms
+7 224terms
+18 352terms
+***5.142***
+4 16terms
+12 18terms
+5 30terms
+11 18terms
+***0.393***
+---
+0 2terms
+10 0terms
+***0.017***
+0.082 milliseconds
+0.676945	6.116
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+3 1terms
+2 1terms
+1 1terms
+***0.019***
+13 2terms
+6 4terms
+17 8terms
+18 16terms
+7 32terms
+16 64terms
+15 128terms
+9 256terms
+14 306terms
+8 416terms
+***6.961***
+11 16terms
+4 26terms
+12 30terms
+5 42terms
+***0.462***
+---
+0 2terms
+10 0terms
+***0.017***
+0.082 milliseconds
+0.676945	7.967
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+2 1terms
+1 1terms
+3 1terms
+***0.019***
+8 2terms
+6 4terms
+13 8terms
+16 16terms
+15 32terms
+18 64terms
+7 104terms
+9 196terms
+17 260terms
+14 300terms
+***5.578***
+5 16terms
+4 22terms
+12 18terms
+11 18terms
+***0.323***
+---
+10 4terms
+0 2terms
+***0.03***
+0.095 milliseconds
+0.676945	6.453
+11	19	finding cuts
+original cuts: 3
+starting
+converting to vector
+entering function
+---
+3 1terms
+1 1terms
+2 1terms
+***0.018***
+6 2terms
+7 4terms
+16 8terms
+15 16terms
+8 32terms
+17 60terms
+14 108terms
+9 196terms
+13 260terms
+18 352terms
+***5.421***
+4 16terms
+5 18terms
+11 18terms
+12 18terms
+***0.307***
+---
+10 4terms
+0 2terms
+***0.03***
+0.094 milliseconds
+0.676945	6.277
+#>>result = 0.676945
+@@@

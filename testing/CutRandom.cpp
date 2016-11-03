@@ -581,6 +581,7 @@ double Solve(ListDigraph& g, WeightMap& wMap, ListDigraph::Node& source, ListDig
             ConsumeSausage(g, wMap, poly, sausage, nextCut.getMiddle(), paths);
         }catch(exception& e){
             cout << endl << "EXCEPTION: " << e.what() << ": " << typeid(e).name() << endl;
+            cout << "@@@";
             exit(3);
         }
         //mark the sausage as covered
